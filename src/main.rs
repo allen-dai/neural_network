@@ -3,9 +3,9 @@ mod layer;
 mod loss;
 mod network;
 
-use activations::Tanh;
+use activations::{Tanh, Sigmoid};
 use layer::dense::DenseLayer;
-use loss::{MsePrime, Mse};
+use loss::Mse;
 use network::Network;
 
 use mnist::MnistLoader;
@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ];
     let train_answer = vec![vec![0f32], vec![1f32], vec![1f32], vec![0f32]];
 
-    network.train(Mse{}, MsePrime{}, &train_set, &train_answer, 0.1, 10000, true);
+    network.train(Mse{}, &train_set, &train_answer, 0.01, 10000, true);
     let input = vec![0f32, 0f32];
     let output = network.predict(&input);
     println!("\n\n{:?}\n{:?}", input, output);

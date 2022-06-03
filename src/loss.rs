@@ -3,23 +3,8 @@ pub trait Loss {
     fn loss_prime(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> Vec<f32>;
 }
 
-pub struct MsePrime {}
-impl Loss for MsePrime {
-    fn loss(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> f32 {
-        0f32
-    }
-    fn loss_prime(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> Vec<f32> {
-        let len = truth.len() as f32;
-        truth
-            .iter()
-            .zip(prediction.iter())
-            .map(|(t, p)| 2f32 * (p - t))
-            .collect()
-    }
-}
-
 pub struct Mse {}
-impl Loss for Mse {
+impl Loss for Mse{
     fn loss(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> f32 {
         let len = truth.len() as f32;
         truth
@@ -30,6 +15,11 @@ impl Loss for Mse {
             / len
     }
     fn loss_prime(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> Vec<f32> {
-        vec![]
+        let len = truth.len() as f32;
+        truth
+            .iter()
+            .zip(prediction.iter())
+            .map(|(t, p)| 2f32 * (p - t))
+            .collect()
     }
 }

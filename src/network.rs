@@ -24,23 +24,22 @@ impl<'a, T, U> Network<'a, T, U> where T: Layer, U: Activation{
         output
     }
 
-    pub fn train<L: Loss, P: Loss>(
+    pub fn train<L: Loss>(
         &mut self,
-        loss: L,
-        loss_prime: P,
+        loss_fn: L,
         train_set: &Vec<Vec<f32>>,
         train_answer: &Vec<Vec<f32>>,
         learning_rate: f32,
         epoch: usize,
         verbose: bool,
     ) {
-        let (mut error, mut output, mut gradient);
+        let (mut loss, mut output, mut gradient);
         for i in 0..epoch {
-            error = 0f32;
+            loss = 0f32;
             for (x, y) in train_set.iter().zip(train_answer.iter()) {
                 output = self.predict(&x);
-                error += loss.loss(&y, &output);
-                gradient = loss_prime.loss_prime(&y, &output);
+                loss += loss_fn.loss(&y, &output);
+                gradient = loss_fn.loss_prime(&y, &output);
                 for (layer, activation_fn) in
                     self.layers.iter_mut().zip(self.activations.iter_mut())
                 {
@@ -50,7 +49,7 @@ impl<'a, T, U> Network<'a, T, U> where T: Layer, U: Activation{
             }
 
             if verbose {
-                println!("epoch: {} | error: {}", i, error / train_set.len() as f32);
+                println!("epoch: {} | loss: {}", i, loss / train_set.len() as f32);
             }
         }
     }
