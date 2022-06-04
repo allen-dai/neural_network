@@ -23,7 +23,7 @@ impl DenseLayer {
             }
             weights.push(temp);
         }
-        for _y in 0..input_size {
+        for _y in 0..output_size {
             biases.push(rng.gen_range(0f32..1f32));
         }
         thread_rng().try_fill(&mut biases[..]).unwrap();
