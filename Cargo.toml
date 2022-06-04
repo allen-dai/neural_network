@@ -7,6 +7,4 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8"
-byteorder = "1"
-plotters = "0.3"
 mnist = { git = "https://github.com/Allen-Dai/mnist"}

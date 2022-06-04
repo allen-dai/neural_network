@@ -1,4 +1,4 @@
-mod activations;
-mod layer;
-mod loss;
-mod network;
+pub mod activations;
+pub mod layer;
+pub mod loss;
+pub mod network;

@@ -1,68 +1,63 @@
 pub trait Activation {
-    fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32>;
-    fn b_prop(&self, output_gradient: &Vec<f32>) -> Vec<f32>;
+    fn activation(x: f32) -> f32;
+    fn derivative(x: f32) -> f32;
+    fn set_input(&mut self, input: Vec<f32>);
+    fn get_input(&self) -> &Vec<f32>;
+
+    fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
+        self.set_input(input.to_vec());
+        input.iter().map(|i| Self::activation(*i)).collect()
+    }
+
+    fn b_prop(&self, output_gradient: &Vec<f32>) -> Vec<f32> {
+        self.get_input()
+            .iter()
+            .zip(output_gradient.iter())
+            .map(|(i, og)| Self::derivative(*i) * og)
+            .collect()
+    }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct Tanh {
     input: Vec<f32>,
 }
-
-impl Tanh {
-    fn tanh(x: &f32) -> f32 {
+impl Activation for Tanh {
+    fn activation(x: f32) -> f32 {
         x.tanh()
     }
 
-    // derivative
-    fn tanh_prime(x: &f32) -> f32 {
+    fn derivative(x: f32) -> f32 {
         1f32 - x.tanh().powi(2)
     }
-}
 
-impl Activation for Tanh {
-    fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
-        self.input = input.to_vec();
-        input.iter().map(|i| Self::tanh(i)).collect()
+    fn set_input(&mut self, input: Vec<f32>) {
+        self.input = input;
     }
 
-    fn b_prop(&self, output_gradient: &Vec<f32>) -> Vec<f32> {
-        assert_eq!(output_gradient.len(), self.input.len());
-        self.input
-            .iter()
-            .zip(output_gradient.iter())
-            .map(|(i, og)| Self::tanh_prime(i) * og)
-            .collect()
+    fn get_input(&self) -> &Vec<f32> {
+        &self.input
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct Sigmoid {
     input: Vec<f32>,
 }
-
-impl Sigmoid {
-    fn sigmoid(x: &f32) -> f32 {
+impl Activation for Sigmoid {
+    fn activation(x: f32) -> f32 {
         1f32 / (1f32 + f32::exp(-x))
     }
 
-    // derivative
-    fn sigmoid_prime(x: &f32) -> f32 {
-        Self::sigmoid(x) * (1f32 - Self::sigmoid(x))
-    }
-}
-
-impl Activation for Sigmoid {
-    fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
-        self.input = input.to_vec();
-        input.iter().map(|i| Self::sigmoid(i)).collect()
+    fn derivative(x: f32) -> f32 {
+        Self::activation(x) * (1f32 - Self::activation(x))
     }
 
-    fn b_prop(&self, output_gradient: &Vec<f32>) -> Vec<f32> {
-        assert_eq!(output_gradient.len(), self.input.len());
-        self.input
-            .iter()
-            .zip(output_gradient.iter())
-            .map(|(i, og)| Self::sigmoid_prime(i) * og)
-            .collect()
+    fn set_input(&mut self, input: Vec<f32>) {
+        self.input = input;
+    }
+
+    fn get_input(&self) -> &Vec<f32> {
+        &self.input
     }
 }
