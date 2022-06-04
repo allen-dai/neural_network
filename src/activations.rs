@@ -1,6 +1,6 @@
 pub trait Activation {
     fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32>;
-    fn b_prop(&self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32>;
+    fn b_prop(&self, output_gradient: &Vec<f32>) -> Vec<f32>;
 }
 
 #[derive(Default, Clone)]
@@ -25,7 +25,7 @@ impl Activation for Tanh {
         input.iter().map(|i| Self::tanh(i)).collect()
     }
 
-    fn b_prop(&self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
+    fn b_prop(&self, output_gradient: &Vec<f32>) -> Vec<f32> {
         assert_eq!(output_gradient.len(), self.input.len());
         self.input
             .iter()
@@ -57,7 +57,7 @@ impl Activation for Sigmoid {
         input.iter().map(|i| Self::sigmoid(i)).collect()
     }
 
-    fn b_prop(&self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
+    fn b_prop(&self, output_gradient: &Vec<f32>) -> Vec<f32> {
         assert_eq!(output_gradient.len(), self.input.len());
         self.input
             .iter()

@@ -45,7 +45,7 @@ impl<'a, T, U> Network<'a, T, U> where T: Layer, U: Activation{
                 for (layer, activation_fn) in
                     self.layers.iter_mut().zip(self.activations.iter_mut()).rev()
                 {
-                    gradient = activation_fn.b_prop(&gradient, learning_rate);
+                    gradient = activation_fn.b_prop(&gradient);
                     gradient = layer.b_prop(&gradient, learning_rate);
                 }
             }
