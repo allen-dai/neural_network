@@ -88,7 +88,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Training finished...\n\n");
 
-    println!("---------- Against original trian set ----------");
+    println!("---------- Against original train set ----------");
     let mut correct = 0f32;
     for img_num in 0..test_size {
         let out = network.predict(&train_set[img_num]);

@@ -3,7 +3,6 @@ use crate::layer::Layer;
 use rand::thread_rng;
 use rand::Rng;
 
-#[derive(Debug, Clone)]
 pub struct DenseLayer {
     pub input: Vec<f32>,
     pub output: Vec<f32>,

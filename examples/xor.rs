@@ -25,7 +25,7 @@ fn main(){
     network.train(Mse {}, &train_set, &train_answer, 0.1f32, 10000, true);
     println!("Training finished...\n\n");
 
-    println!("---------- Against original trian set ----------");
+    println!("---------- Against original train set ----------");
     let mut correct = 0f32;
     for i in 0..train_set.len(){
         let out = network.predict(&train_set[i]);
