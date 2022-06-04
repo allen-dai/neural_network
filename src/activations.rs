@@ -26,6 +26,7 @@ impl Activation for Tanh {
     }
 
     fn b_prop(&self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
+        assert_eq!(output_gradient.len(), self.input.len());
         self.input
             .iter()
             .zip(output_gradient.iter())
@@ -57,6 +58,7 @@ impl Activation for Sigmoid {
     }
 
     fn b_prop(&self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
+        assert_eq!(output_gradient.len(), self.input.len());
         self.input
             .iter()
             .zip(output_gradient.iter())

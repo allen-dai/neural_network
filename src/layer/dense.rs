@@ -38,51 +38,64 @@ impl DenseLayer {
 }
 impl Layer for DenseLayer {
     fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
-        //assert_eq!(self.input.len(), input.len());
+        assert_eq!(self.input.len(), input.len());
 
+        //println!("{} {}", self.biases.len(), self.weights[0].len());
         self.input = input.clone();
         self.weights
             .iter()
             //y.j = x.i * w.j.i
-            .map(|neuron| neuron.iter().zip(input).fold(0f32, |p, (w, i)| p + w * i))
-            .zip(self.biases.iter())
+            .map(|neuron| {
+                neuron
+                    .iter()
+                    .zip(input.iter())
+                    .fold(0f32, |p, (w, i)| p + w * i)
+            })
             //y.j += b.j
-            .map(|(w, b)| w + b)
+            .zip(self.biases.iter())
+            .map(|(o, b)| o + b)
             .collect()
     }
 
     fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
         // dot product of output_gradient vec[_] * vec[input]
-        let weight_grad: Vec<f32> = self
-            .input
-            .iter()
-            .zip(output_gradient.iter())
-            .map(|(i, og)| i * og)
-            .collect();
+        let mut weight_grad: Vec<Vec<f32>> = Vec::new();
+        for r in output_gradient.iter() {
+            let mut temp = Vec::new();
+            for i in self.input.iter() {
+                temp.push(i * r);
+            }
+            weight_grad.push(temp);
+        }
 
-        let weight_t: Vec<Vec<f32>> = (0..self.weights[0].len())
-            .map(|i| self.weights.iter().map(|inner| inner[i]).collect())
-            .collect();
+        let mut weight_t: Vec<Vec<f32>> = Vec::new();
+        for col in 0..self.weights[0].len() {
+            let mut temp = Vec::new();
+            for row in self.weights.iter() {
+                temp.push(row[col]);
+            }
+            weight_t.push(temp);
+        }
 
         // dot product of vec[neurons][weights].t * vec[out_grad]
         let input_grad: Vec<f32> = weight_t
-        .iter()
-        .map(|neuron| {
-            neuron
-                .iter()
-                .zip(output_gradient.iter())
-                .fold(0f32, |p, (w, og)| p + w * og)
-        } / neuron.len() as f32)
-        .collect();
+            .iter()
+            .map(|row| {
+                row.iter()
+                    .zip(output_gradient.iter())
+                    .fold(0f32, |p, (w, og)| p + w * og)
+            })
+            .collect();
 
         self.weights = self
             .weights
             .iter()
-            .map(|neuron| {
+            .zip(weight_grad.iter())
+            .map(|(neuron, nwg)| {
                 neuron
                     .iter()
-                    .zip(weight_grad.iter())
-                    .map(|(w, g)| w - g * learning_rate)
+                    .zip(nwg.iter())
+                    .map(|(w, wg)| w - wg * learning_rate)
                     .collect()
             })
             .collect();
@@ -90,7 +103,7 @@ impl Layer for DenseLayer {
         self.biases = self
             .biases
             .iter()
-            .zip(output_gradient.iter())
+            .zip(output_gradient)
             .map(|(b, og)| b - og * learning_rate)
             .collect();
 

@@ -19,7 +19,7 @@ impl Loss for Mse{
         truth
             .iter()
             .zip(prediction.iter())
-            .map(|(t, p)| 2f32 * (p - t))
+            .map(|(t, p)| 2f32 * (p - t) / len)
             .collect()
     }
 }

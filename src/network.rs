@@ -38,10 +38,12 @@ impl<'a, T, U> Network<'a, T, U> where T: Layer, U: Activation{
             loss = 0f32;
             for (x, y) in train_set.iter().zip(train_answer.iter()) {
                 output = self.predict(&x);
+
                 loss += loss_fn.loss(&y, &output);
                 gradient = loss_fn.loss_prime(&y, &output);
+
                 for (layer, activation_fn) in
-                    self.layers.iter_mut().zip(self.activations.iter_mut())
+                    self.layers.iter_mut().zip(self.activations.iter_mut()).rev()
                 {
                     gradient = activation_fn.b_prop(&gradient, learning_rate);
                     gradient = layer.b_prop(&gradient, learning_rate);
