@@ -1,6 +1,6 @@
 use neural_network::activations::Tanh;
 use neural_network::layer::dense::DenseLayer;
-use neural_network::loss::Mse;
+use neural_network::loss::MSE;
 use neural_network::network::Network;
 
 fn main(){
@@ -22,7 +22,7 @@ fn main(){
     let train_answer = vec![vec![0f32], vec![1f32], vec![1f32], vec![0f32]];
 
     println!("Training started...");
-    network.train(Mse {}, &train_set, &train_answer, 0.1f32, 10000, true);
+    network.train(MSE {}, &train_set, &train_answer, 0.1f32, 10000, true);
     println!("Training finished...\n\n");
 
     println!("---------- Against original train set ----------");

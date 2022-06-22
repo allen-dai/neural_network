@@ -1,6 +1,6 @@
 use neural_network::activations::Sigmoid;
 use neural_network::layer::dense::DenseLayer;
-use neural_network::loss::Mse;
+use neural_network::loss::MSE;
 use neural_network::network::Network;
 
 use mnist::MnistLoader;
@@ -84,7 +84,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Training started...");
 
-    network.train(Mse {}, &train_set, &train_answer, 0.1f32, 100, true);
+    network.train(MSE {}, &train_set, &train_answer, 0.1f32, 100, true);
 
     println!("Training finished...\n\n");
 
