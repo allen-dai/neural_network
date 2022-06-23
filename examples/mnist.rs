@@ -77,10 +77,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layer_2 = DenseLayer::new(50, 10);
     let activation_1 = Sigmoid::default();
     let activation_2 = Sigmoid::default();
-    let mut layers = vec![layer_1, layer_2];
-    let mut activations = vec![activation_1, activation_2];
+    let layers = vec![layer_1, layer_2];
+    let activations = vec![activation_1, activation_2];
 
-    let mut network = Network::new(&mut layers, &mut activations);
+    let mut network = Network::new(layers, activations);
 
     println!("Training started...");
 

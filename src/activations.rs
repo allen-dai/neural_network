@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 pub trait Activation {
     fn activation(x: f32) -> f32;
     fn derivative(x: f32) -> f32;
@@ -18,7 +20,7 @@ pub trait Activation {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize, PartialEq)]
 pub struct Tanh {
     input: Vec<f32>,
 }
@@ -40,7 +42,7 @@ impl Activation for Tanh {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize, PartialEq)]
 pub struct Sigmoid {
     input: Vec<f32>,
 }
