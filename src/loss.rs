@@ -3,7 +3,7 @@ pub trait Loss {
     fn loss_prime(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> Vec<f32>;
 }
 
-pub struct MSE {}
+pub struct MSE;
 impl Loss for MSE {
     fn loss(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> f32 {
         let len = truth.len() as f32;
