@@ -7,22 +7,21 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, PartialEq)]
 pub struct DenseLayer {
     pub input: Vec<f32>,
-    pub output: Vec<f32>,
     pub weights: Vec<Vec<f32>>, //vec[nth neuron][weights]
     pub biases: Vec<f32>,
 }
 
 impl DenseLayer {
     pub fn new(input_size: usize, output_size: usize) -> Self {
-        let mut weights = Vec::new();
-        let mut biases = Vec::new();
+        let mut weights = Vec::with_capacity(input_size * output_size);
+        let mut biases = Vec::with_capacity(output_size);
         let mut rng = thread_rng();
+        let mut temp: Vec<f32> = vec![0f32; input_size];
         for _y in 0..output_size {
-            let mut temp = Vec::new();
             for _x in 0..input_size {
-                temp.push(rng.gen_range(-1f32..1f32));
+                temp[_x] = rng.gen_range(-1f32..1f32);
             }
-            weights.push(temp);
+            weights.push(temp.clone());
         }
         for _y in 0..output_size {
             biases.push(rng.gen_range(-1f32..1f32));
@@ -31,18 +30,17 @@ impl DenseLayer {
 
         DenseLayer {
             input: vec![0f32; input_size],
-            output: vec![0f32; input_size],
             weights,
             biases,
         }
     }
 }
 impl Layer for DenseLayer {
-    fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
+    fn f_prop(&mut self, input: &[f32]) -> Vec<f32> {
         assert_eq!(self.input.len(), input.len());
 
         //println!("{} {}", self.biases.len(), self.weights[0].len());
-        self.input = input.clone();
+        self.input = input.to_vec();
         self.weights
             .iter()
             //y.j = x.i * w.j.i
@@ -58,24 +56,26 @@ impl Layer for DenseLayer {
             .collect()
     }
 
-    fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
+    fn b_prop(&mut self, output_gradient: &[f32], learning_rate: f32) -> Vec<f32> {
         // dot product of output_gradient vec[_] * vec[input]
-        let mut weight_grad: Vec<Vec<f32>> = Vec::new();
+        let mut weight_grad: Vec<Vec<f32>> =
+            Vec::with_capacity(output_gradient.len() * self.input.len());
+        let mut temp: Vec<f32> = vec![0f32; self.input.len()];
         for r in output_gradient.iter() {
-            let mut temp = Vec::new();
-            for i in self.input.iter() {
-                temp.push(i * r);
+            for (i, c) in self.input.iter().enumerate() {
+                temp[i] = c * r;
             }
-            weight_grad.push(temp);
+            weight_grad.push(temp.clone());
         }
 
-        let mut weight_t: Vec<Vec<f32>> = Vec::new();
+        let mut weight_t: Vec<Vec<f32>> =
+            Vec::with_capacity(self.weights[0].len() * self.weights.len());
+        let mut temp: Vec<f32> = vec![0f32; self.weights.len()];
         for col in 0..self.weights[0].len() {
-            let mut temp = Vec::new();
-            for row in self.weights.iter() {
-                temp.push(row[col]);
+            for (i, row) in self.weights.iter().enumerate() {
+                temp[i] = row[col];
             }
-            weight_t.push(temp);
+            weight_t.push(temp.clone());
         }
 
         // dot product of vec[neurons][weights].t * vec[out_grad]
