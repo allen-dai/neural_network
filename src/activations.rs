@@ -3,15 +3,15 @@ use serde::{Deserialize, Serialize};
 pub trait Activation {
     fn activation(x: f32) -> f32;
     fn derivative(x: f32) -> f32;
-    fn set_input(&mut self, input: Vec<f32>);
+    fn set_input(&mut self, input: &[f32]);
     fn get_input(&self) -> &Vec<f32>;
 
-    fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
-        self.set_input(input.to_vec());
+    fn f_prop(&mut self, input: &[f32]) -> Vec<f32> {
+        self.set_input(&input.to_vec());
         input.iter().map(|i| Self::activation(*i)).collect()
     }
 
-    fn b_prop(&self, output_gradient: &Vec<f32>) -> Vec<f32> {
+    fn b_prop(&self, output_gradient: &[f32]) -> Vec<f32> {
         self.get_input()
             .iter()
             .zip(output_gradient.iter())
@@ -33,8 +33,8 @@ impl Activation for Tanh {
         1f32 - x.tanh().powi(2)
     }
 
-    fn set_input(&mut self, input: Vec<f32>) {
-        self.input = input;
+    fn set_input(&mut self, input: &[f32]) {
+        self.input = input.to_vec();
     }
 
     fn get_input(&self) -> &Vec<f32> {
@@ -55,8 +55,8 @@ impl Activation for Sigmoid {
         Self::activation(x) * (1f32 - Self::activation(x))
     }
 
-    fn set_input(&mut self, input: Vec<f32>) {
-        self.input = input;
+    fn set_input(&mut self, input: &[f32]) {
+        self.input = input.to_vec();
     }
 
     fn get_input(&self) -> &Vec<f32> {
