@@ -63,3 +63,28 @@ impl Activation for Sigmoid {
         &self.input
     }
 }
+
+#[derive(Default, Serialize, Deserialize, PartialEq)]
+pub struct Relu {
+    input: Vec<f32>,
+}
+impl Activation for Relu {
+    fn activation(x: f32) -> f32 {
+        f32::max(0f32, x)
+    }
+
+    fn derivative(x: f32) -> f32 {
+        if x > 0f32 {
+            return 1f32
+        }
+        return 0f32
+    }
+
+    fn set_input(&mut self, input: &[f32]) {
+        self.input = input.to_vec();
+    }
+
+    fn get_input(&self) -> &Vec<f32> {
+        &self.input
+    }
+}
