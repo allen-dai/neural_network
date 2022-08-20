@@ -1,23 +1,18 @@
 use crate::activations::Activation;
 use crate::layer::Layer;
 use crate::loss::Loss;
-use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::{BufReader, Read, Write};
 use std::path::Path;
 
-#[derive(Serialize, Deserialize, PartialEq)]
-pub struct Network<T, U> {
-    layers: Vec<T>,
-    activations: Vec<U>,
+#[derive(serde::Serialize)]
+pub struct Network {
+    layers: Vec<Box<dyn Layer>>,
+    activations: Vec<Box<dyn Activation>>,
 }
 
-impl<'a, T, U> Network<T, U>
-where
-    T: Layer + Serialize + Deserialize<'a>,
-    U: Activation + Serialize + Deserialize<'a>,
-{
-    pub fn new(layers: Vec<T>, activations: Vec<U>) -> Self {
+impl<'a> Network {
+    pub fn new(layers: Vec<Box<dyn Layer>>, activations: Vec<Box<dyn Activation>>) -> Self {
         Network {
             layers,
             activations,
@@ -70,17 +65,16 @@ where
 
     pub fn save_to_file(&self, path: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {
         let mut file = fs::File::create(path)?;
-        let serialized: Vec<u8> = bincode::serialize(self.clone())?;
+        let serialized: Vec<u8> = serde_cbor::to_vec(&self)?;
         file.write_all(&serialized)?;
         Ok(())
     }
 
-    pub fn load_from_file(&mut self, bytes: &'a Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
-        //TODO Type infer - instead of needing a '&mut self', return Self.
-        //I don't know how to implement this.
-        let deserialized: Self = bincode::deserialize(bytes)?;
-        self.layers = deserialized.layers;
-        self.activations = deserialized.activations;
+    /* pub fn load_from_file(&mut self, bytes: &'a Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
+        let cbor = &mut serde_cbor::Deserializer::from_slice(bytes);
+        let erased = Box::new(<dyn erased_serde::Deserializer>::erase(cbor));
+        let network: Self = erased_serde::deserialize(erased.as_mut())?;
+        *self = network;
         Ok(())
-    }
+    } */
 }

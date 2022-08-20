@@ -1,4 +1,7 @@
+use neural_network::activations::Activation;
 use neural_network::activations::Sigmoid;
+use neural_network::activations::Tanh;
+use neural_network::layer::Layer;
 use neural_network::layer::dense::DenseLayer;
 use neural_network::loss::MSE;
 use neural_network::network::Network;
@@ -21,8 +24,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "./examples/mnist_data/t10k-labels-idx1-ubyte",
     )?;
 
-    let train_size = 100;
-    let test_size = 10;
+    let train_size = 1000;
+    let test_size = 100;
 
     let mut rng = thread_rng();
     let train_bound: usize = 60000 - train_size;
@@ -76,15 +79,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layer_1 = DenseLayer::new(28 * 28, 50);
     let layer_2 = DenseLayer::new(50, 10);
     let activation_1 = Sigmoid::default();
-    let activation_2 = Sigmoid::default();
-    let layers = vec![layer_1, layer_2];
-    let activations = vec![activation_1, activation_2];
+    let activation_2 = Tanh::default();
+    let layers: Vec<Box<dyn Layer>> = vec![Box::new(layer_1), Box::new(layer_2)];
+    let activations:Vec<Box<dyn Activation>> = vec![Box::new(activation_1), Box::new(activation_2)];
 
     let mut network = Network::new(layers, activations);
 
     println!("Training started...");
 
-    network.train(MSE {}, &train_set, &train_answer, 0.1f32, 100, true);
+    network.train(MSE {}, &train_set, &train_answer, 3f32, 2, true);
 
     println!("Training finished...\n\n");
 
@@ -137,6 +140,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         test_size - correct as usize,
         correct / test_size as f32 * 100.0,
     );
+
+    println!("Model saved to ./v1");
+    network.save_to_file("./v1").unwrap();
 
     Ok(())
 }
