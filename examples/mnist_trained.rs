@@ -48,11 +48,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         test_answer.push(temp.to_vec());
     }
 
-    let mut network = Network::default();
-
     println!("Loading Model...");
 
-    network.load_from_file("./models/mnist").unwrap();
+    let mut network = Network::from_file("./models/mnist").unwrap();
 
     println!("Model loaded, starting to test...\n\n");
 
