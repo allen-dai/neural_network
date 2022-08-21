@@ -35,6 +35,8 @@ impl DenseLayer {
         }
     }
 }
+
+#[typetag::serde(name = "DenseLayer")]
 impl Layer for DenseLayer {
     fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
         assert_eq!(self.input.len(), input.len());

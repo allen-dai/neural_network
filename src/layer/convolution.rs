@@ -58,6 +58,7 @@ impl ConvolutionLayer {
     }
 }
 
+#[typetag::serde(name = "ConvolutionLayer")]
 impl Layer for ConvolutionLayer {
     fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
         todo!()

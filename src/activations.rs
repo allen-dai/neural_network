@@ -1,6 +1,8 @@
-use serde::{Deserialize, Serialize, Deserializer};
+use serde::{Deserialize, Serialize};
 
-pub trait Activation : erased_serde::Serialize {
+
+#[typetag::serde(tag = "type", content = "value")]
+pub trait Activation {
     fn activation(&self, x: f32) -> f32;
     fn derivative(&self, x: f32) -> f32;
     fn set_input(&mut self, input: &[f32]);
@@ -20,22 +22,13 @@ pub trait Activation : erased_serde::Serialize {
     }
 }
 
-erased_serde::serialize_trait_object!(Activation);
-
-
-impl<'de> Deserialize<'de> for Box<dyn Activation> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        todo!()
-    }
-}
+//erased_serde::serialize_trait_object!(Activation);
 
 #[derive(Default, Serialize, Deserialize, PartialEq)]
 pub struct Tanh {
     input: Vec<f32>,
 }
+#[typetag::serde(name = "Tanh")]
 impl Activation for Tanh {
     fn activation(&self, x: f32) -> f32 {
         x.tanh()
@@ -58,6 +51,8 @@ impl Activation for Tanh {
 pub struct Sigmoid {
     input: Vec<f32>,
 }
+
+#[typetag::serde(name = "Sigmoid")]
 impl Activation for Sigmoid {
     fn activation(&self, x: f32) -> f32 {
         1f32 / (1f32 + f32::exp(-x))
@@ -80,6 +75,8 @@ impl Activation for Sigmoid {
 pub struct Relu {
     input: Vec<f32>,
 }
+
+#[typetag::serde(name = "Relu")]
 impl Activation for Relu {
     fn activation(&self, x: f32) -> f32 {
         f32::max(0f32, x)

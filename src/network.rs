@@ -4,8 +4,9 @@ use crate::loss::Loss;
 use std::fs;
 use std::io::{BufReader, Read, Write};
 use std::path::Path;
+use serde::{Serialize, Deserialize};
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Network {
     layers: Vec<Box<dyn Layer>>,
     activations: Vec<Box<dyn Activation>>,
