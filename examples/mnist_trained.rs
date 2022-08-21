@@ -24,41 +24,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "./examples/mnist_data/t10k-labels-idx1-ubyte",
     )?;
 
-    let train_size = 1000;
-    let test_size = 100;
-
     let mut rng = thread_rng();
-    let train_bound: usize = 60000 - train_size;
-    let test_bound: usize = 10000 - test_size;
-    let train_left = rng.gen_range(train_size..train_bound);
-    let test_left = rng.gen_range(test_size..test_bound);
-    let train_right = train_left + train_size;
-    let test_right = test_left + test_size;
-
-    let train_range = train_left..train_right;
-    let test_range = test_left..test_right;
-
-    let mut train_set = Vec::new();
-    let mut train_answer = Vec::new();
+    let test_size = 10000;
+    let test_range = 0..10000;
 
     let mut test_set = Vec::new();
     let mut test_answer = Vec::new();
     println!("Loading dataset...");
-    for i in train_range.clone() {
-        let img = train_images[i * 28 * 28..(i + 1) * 28 * 28].to_vec();
-        let mut temp: Vec<f32> = Vec::new();
-        for pixel in img.iter() {
-            temp.push(*pixel as f32 / 255.0);
-        }
-        train_set.push(temp);
-    }
-
-    for i in train_range.clone() {
-        let l = train_labels[i];
-        let mut temp = [0f32; 10];
-        temp[l as usize] = 1f32;
-        train_answer.push(temp.to_vec());
-    }
 
     for i in test_range.clone() {
         let img = test_images[i * 28 * 28..(i + 1) * 28 * 28].to_vec();
@@ -76,47 +48,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         test_answer.push(temp.to_vec());
     }
 
-    let layer_1 = DenseLayer::new(28 * 28, 50);
-    let layer_2 = DenseLayer::new(50, 10);
-    let activation_1 = Sigmoid::default();
-    let activation_2 = Sigmoid::default();
-    let layers: Vec<Box<dyn Layer>> = vec![Box::new(layer_1), Box::new(layer_2)];
-    let activations:Vec<Box<dyn Activation>> = vec![Box::new(activation_1), Box::new(activation_2)];
+    let mut network = Network::default();
 
-    let mut network = Network::new(layers, activations);
+    println!("Loading Model...");
 
-    println!("Training started...");
+    network.load_from_file("./models/mnist").unwrap();
 
-    network.train(MSE {}, &train_set, &train_answer, 3f32, 100, true);
+    println!("Model loaded, starting to test...\n\n");
 
-    println!("Training finished...\n\n");
-
-    println!("---------- Against original train set ----------");
-    let mut correct = 0f32;
-    for img_num in 0..test_size {
-        let out = network.predict(&train_set[img_num]);
-        let answer = &train_answer[img_num];
-
-        let pred = max_f32(&out)?;
-        let truth = max_f32(&answer)?;
-        if pred.0 == truth.0 {
-            correct += 1f32;
-        }
-        println!(
-            "Prediction: {:>1}  Confidence: {:>6.2}% | Truth: {}",
-            pred.0,
-            pred.1 * 100f32,
-            truth.0
-        );
-    }
-    println!(
-        "\nCorrect: {:>5}  Incorrect: {:>5}   Accuracy: {:>5.2}%",
-        correct as usize,
-        test_size - correct as usize,
-        correct / test_size as f32 * 100.0,
-    );
-
-    println!("\n\n---------- Against Test set ----------");
+    println!("\n\n---------- Test set ----------");
     let mut correct = 0f32;
     for img_num in 0..test_size {
         let out = network.predict(&test_set[img_num]);
@@ -140,9 +80,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         test_size - correct as usize,
         correct / test_size as f32 * 100.0,
     );
-
-    println!("Model saved to ./models/mnist");
-    network.save_to_file("./models/mnist").unwrap();
 
     Ok(())
 }

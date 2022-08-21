@@ -6,7 +6,7 @@ use std::io::{BufReader, Read, Write};
 use std::path::Path;
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct Network {
     layers: Vec<Box<dyn Layer>>,
     activations: Vec<Box<dyn Activation>>,
