@@ -5,7 +5,7 @@ use std::fs;
 use std::io::{BufReader, Read, Write};
 use std::path::Path;
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Network {
     layers: Vec<Box<dyn Layer>>,
     activations: Vec<Box<dyn Activation>>,
@@ -70,11 +70,17 @@ impl<'a> Network {
         Ok(())
     }
 
-    /* pub fn load_from_file(&mut self, bytes: &'a Vec<u8>) -> Result<(), Box<dyn std::error::Error>> {
-        let cbor = &mut serde_cbor::Deserializer::from_slice(bytes);
-        let erased = Box::new(<dyn erased_serde::Deserializer>::erase(cbor));
+    pub fn load_from_file(&mut self, path: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {
+        let mut bytes = Vec::new();
+        let _ = {
+            let mut f = fs::File::open(path)?;
+            let _ = f.read_to_end(&mut bytes)?;
+            &bytes[..]
+        };
+        let cbor = &mut serde_cbor::Deserializer::from_slice(&bytes);
+        let mut erased = Box::new(<dyn erased_serde::Deserializer>::erase(cbor));
         let network: Self = erased_serde::deserialize(erased.as_mut())?;
         *self = network;
         Ok(())
-    } */
+    }
 }

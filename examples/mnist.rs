@@ -143,6 +143,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Model saved to ./v1");
     network.save_to_file("./v1").unwrap();
+    network.load_from_file("./v1");
 
     Ok(())
 }

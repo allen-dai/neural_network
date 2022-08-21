@@ -1,3 +1,5 @@
+use serde::{Deserialize, Deserializer};
+
 pub mod dense;
 pub mod convolution;
 
@@ -7,3 +9,11 @@ pub trait Layer : erased_serde::Serialize  {
 }
 
 erased_serde::serialize_trait_object!(Layer);
+
+impl<'de> Deserialize<'de> for Box<dyn Layer> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de> {
+        todo!()
+    }
+}

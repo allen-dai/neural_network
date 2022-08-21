@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Deserializer};
 
 pub trait Activation : erased_serde::Serialize {
     fn activation(&self, x: f32) -> f32;
@@ -21,6 +21,16 @@ pub trait Activation : erased_serde::Serialize {
 }
 
 erased_serde::serialize_trait_object!(Activation);
+
+
+impl<'de> Deserialize<'de> for Box<dyn Activation> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        todo!()
+    }
+}
 
 #[derive(Default, Serialize, Deserialize, PartialEq)]
 pub struct Tanh {
