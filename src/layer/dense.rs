@@ -28,15 +28,17 @@ impl DenseLayer {
         }
         thread_rng().try_fill(&mut biases[..]).unwrap();
 
-        DenseLayer {
+        Self {
             input: vec![0f32; input_size],
             weights,
             biases,
         }
     }
 }
+
+#[typetag::serde(name = "DenseLayer")]
 impl Layer for DenseLayer {
-    fn f_prop(&mut self, input: &[f32]) -> Vec<f32> {
+    fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
         assert_eq!(self.input.len(), input.len());
 
         //println!("{} {}", self.biases.len(), self.weights[0].len());
@@ -56,7 +58,7 @@ impl Layer for DenseLayer {
             .collect()
     }
 
-    fn b_prop(&mut self, output_gradient: &[f32], learning_rate: f32) -> Vec<f32> {
+    fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
         // dot product of output_gradient vec[_] * vec[input]
         let mut weight_grad: Vec<Vec<f32>> =
             Vec::with_capacity(output_gradient.len() * self.input.len());

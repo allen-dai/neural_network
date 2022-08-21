@@ -7,4 +7,5 @@ Inpsired by _**3Blue1Brown**_ [Neural Network series](https://www.youtube.com/pl
 ```bash
 cargo run --example mnist
 cargo run --example xor
+cargo run --example mnist_trained   // This will load the pre-trained model and it will be run against the whole mnist test set
 ```

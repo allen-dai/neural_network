@@ -1,35 +1,40 @@
 use serde::{Deserialize, Serialize};
 
+
+#[typetag::serde(tag = "type", content = "value")]
 pub trait Activation {
-    fn activation(x: f32) -> f32;
-    fn derivative(x: f32) -> f32;
+    fn activation(&self, x: f32) -> f32;
+    fn derivative(&self, x: f32) -> f32;
     fn set_input(&mut self, input: &[f32]);
     fn get_input(&self) -> &Vec<f32>;
 
     fn f_prop(&mut self, input: &[f32]) -> Vec<f32> {
         self.set_input(&input.to_vec());
-        input.iter().map(|i| Self::activation(*i)).collect()
+        input.iter().map(|i| self.activation(*i)).collect()
     }
 
     fn b_prop(&self, output_gradient: &[f32]) -> Vec<f32> {
         self.get_input()
             .iter()
             .zip(output_gradient.iter())
-            .map(|(i, og)| Self::derivative(*i) * og)
+            .map(|(i, og)| self.derivative(*i) * og)
             .collect()
     }
 }
+
+//erased_serde::serialize_trait_object!(Activation);
 
 #[derive(Default, Serialize, Deserialize, PartialEq)]
 pub struct Tanh {
     input: Vec<f32>,
 }
+#[typetag::serde(name = "Tanh")]
 impl Activation for Tanh {
-    fn activation(x: f32) -> f32 {
+    fn activation(&self, x: f32) -> f32 {
         x.tanh()
     }
 
-    fn derivative(x: f32) -> f32 {
+    fn derivative(&self, x: f32) -> f32 {
         1f32 - x.tanh().powi(2)
     }
 
@@ -46,13 +51,15 @@ impl Activation for Tanh {
 pub struct Sigmoid {
     input: Vec<f32>,
 }
+
+#[typetag::serde(name = "Sigmoid")]
 impl Activation for Sigmoid {
-    fn activation(x: f32) -> f32 {
+    fn activation(&self, x: f32) -> f32 {
         1f32 / (1f32 + f32::exp(-x))
     }
 
-    fn derivative(x: f32) -> f32 {
-        Self::activation(x) * (1f32 - Self::activation(x))
+    fn derivative(&self, x: f32) -> f32 {
+        self.activation(x) * (1f32 - self.activation(x))
     }
 
     fn set_input(&mut self, input: &[f32]) {
@@ -68,12 +75,14 @@ impl Activation for Sigmoid {
 pub struct Relu {
     input: Vec<f32>,
 }
+
+#[typetag::serde(name = "Relu")]
 impl Activation for Relu {
-    fn activation(x: f32) -> f32 {
+    fn activation(&self, x: f32) -> f32 {
         f32::max(0f32, x)
     }
 
-    fn derivative(x: f32) -> f32 {
+    fn derivative(&self, x: f32) -> f32 {
         if x > 0f32 {
             return 1f32
         }
