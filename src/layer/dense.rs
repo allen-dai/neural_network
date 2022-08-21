@@ -1,5 +1,4 @@
-use crate::layer::Layer;
-
+use super::{FOutput, Layer};
 use rand::thread_rng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -38,24 +37,26 @@ impl DenseLayer {
 
 #[typetag::serde(name = "DenseLayer")]
 impl Layer for DenseLayer {
-    fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
+    fn f_prop(&mut self, input: &Vec<f32>) -> FOutput {
         assert_eq!(self.input.len(), input.len());
 
         //println!("{} {}", self.biases.len(), self.weights[0].len());
         self.input = input.to_vec();
-        self.weights
-            .iter()
-            //y.j = x.i * w.j.i
-            .map(|neuron| {
-                neuron
-                    .iter()
-                    .zip(input.iter())
-                    .fold(0f32, |p, (w, i)| p + w * i)
-            })
-            //y.j += b.j
-            .zip(self.biases.iter())
-            .map(|(o, b)| o + b)
-            .collect()
+        FOutput::Dense(
+            self.weights
+                .iter()
+                //y.j = x.i * w.j.i
+                .map(|neuron| {
+                    neuron
+                        .iter()
+                        .zip(input.iter())
+                        .fold(0f32, |p, (w, i)| p + w * i)
+                })
+                //y.j += b.j
+                .zip(self.biases.iter())
+                .map(|(o, b)| o + b)
+                .collect(),
+        )
     }
 
     fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
