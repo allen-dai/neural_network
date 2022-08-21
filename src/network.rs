@@ -1,5 +1,5 @@
 use crate::activations::Activation;
-use crate::layer::Layer;
+use crate::layer::{Layer, FOutput};
 use crate::loss::Loss;
 use std::fs;
 use std::io::{BufReader, Read, Write};
@@ -23,7 +23,12 @@ impl<'a> Network {
     pub fn predict(&mut self, input: &Vec<f32>) -> Vec<f32> {
         let mut output = input.clone();
         for (layer, activation_fn) in self.layers.iter_mut().zip(self.activations.iter_mut()) {
-            output = layer.f_prop(&output);
+            let layer_output = layer.f_prop(&output);
+            match layer_output {
+                // Reshape if next layer is dense, continue otherwise
+                FOutput::Conv(v) => todo!(),
+                FOutput::Dense(v) => output = v,
+            }
             output = activation_fn.f_prop(&output);
         }
         output
@@ -73,11 +78,8 @@ impl<'a> Network {
 
     pub fn load_from_file(&mut self, path: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {
         let mut bytes = Vec::new();
-        let _ = {
-            let mut f = fs::File::open(path)?;
-            let _ = f.read_to_end(&mut bytes)?;
-            &bytes[..]
-        };
+        let mut f = fs::File::open(path)?;
+        f.read_to_end(&mut bytes)?;
         let cbor = &mut serde_cbor::Deserializer::from_slice(&bytes);
         let mut erased = Box::new(<dyn erased_serde::Deserializer>::erase(cbor));
         let network: Self = erased_serde::deserialize(erased.as_mut())?;

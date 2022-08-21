@@ -1,5 +1,4 @@
-use crate::layer::Layer;
-
+use super::{FOutput, Layer};
 use rand::thread_rng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -53,14 +52,14 @@ impl ConvolutionLayer {
             output_shape,
             kernel_shape,
             kernels,
-            biases
+            biases,
         }
     }
 }
 
 #[typetag::serde(name = "ConvolutionLayer")]
 impl Layer for ConvolutionLayer {
-    fn f_prop(&mut self, input: &Vec<f32>) -> Vec<f32> {
+    fn f_prop(&mut self, input: &Vec<f32>) -> FOutput {
         todo!()
     }
 
