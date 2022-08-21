@@ -78,11 +78,8 @@ impl<'a> Network {
 
     pub fn load_from_file(&mut self, path: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {
         let mut bytes = Vec::new();
-        let _ = {
-            let mut f = fs::File::open(path)?;
-            let _ = f.read_to_end(&mut bytes)?;
-            &bytes[..]
-        };
+        let mut f = fs::File::open(path)?;
+        f.read_to_end(&mut bytes)?;
         let cbor = &mut serde_cbor::Deserializer::from_slice(&bytes);
         let mut erased = Box::new(<dyn erased_serde::Deserializer>::erase(cbor));
         let network: Self = erased_serde::deserialize(erased.as_mut())?;
