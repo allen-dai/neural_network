@@ -22,6 +22,11 @@ impl<'a> Network {
 
     pub fn predict(&mut self, input: &Vec<f32>) -> Vec<f32> {
         let mut output = input.clone();
+
+        // May need to iterate with indcies, because we need to know the type of layer then do
+        // "reshape" to the output accordingly.
+        //
+        // Layer type can be known after output. (i.e. FOut::Conv | FOut::Dense )
         for (layer, activation_fn) in self.layers.iter_mut().zip(self.activations.iter_mut()) {
             let layer_output = layer.f_prop(&output);
             match layer_output {
