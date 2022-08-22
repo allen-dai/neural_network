@@ -1,4 +1,4 @@
-use super::{FOutput, Layer};
+use super::{FOut, Layer};
 use rand::thread_rng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -59,7 +59,7 @@ impl ConvolutionLayer {
 
 #[typetag::serde(name = "ConvolutionLayer")]
 impl Layer for ConvolutionLayer {
-    fn f_prop(&mut self, input: &Vec<f32>) -> FOutput {
+    fn f_prop(&mut self, input: &Vec<f32>) -> FOut {
         todo!()
     }
 

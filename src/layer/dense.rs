@@ -1,4 +1,4 @@
-use super::{FOutput, Layer};
+use super::{FOut, Layer};
 use rand::thread_rng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -37,12 +37,12 @@ impl DenseLayer {
 
 #[typetag::serde(name = "DenseLayer")]
 impl Layer for DenseLayer {
-    fn f_prop(&mut self, input: &Vec<f32>) -> FOutput {
+    fn f_prop(&mut self, input: &Vec<f32>) -> FOut {
         assert_eq!(self.input.len(), input.len());
 
         //println!("{} {}", self.biases.len(), self.weights[0].len());
         self.input = input.to_vec();
-        FOutput::Dense(
+        FOut::Dense(
             self.weights
                 .iter()
                 //y.j = x.i * w.j.i
