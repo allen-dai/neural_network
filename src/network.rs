@@ -12,7 +12,7 @@ pub struct Network {
     activations: Vec<Box<dyn Activation>>,
 }
 
-impl<'a> Network {
+impl Network {
     pub fn new(layers: Vec<Box<dyn Layer>>, activations: Vec<Box<dyn Activation>>) -> Self {
         Network {
             layers,
