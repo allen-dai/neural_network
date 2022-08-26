@@ -1,8 +1,7 @@
-use neural_network::activations::Activation;
+use neural_network::activations::ActivationFn;
 use neural_network::activations::Sigmoid;
-use neural_network::activations::Tanh;
-use neural_network::layer::Layer;
 use neural_network::layer::dense::DenseLayer;
+use neural_network::layer::LayerType;
 use neural_network::loss::MSE;
 use neural_network::network::Network;
 
@@ -80,8 +79,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let layer_2 = DenseLayer::new(50, 10);
     let activation_1 = Sigmoid::default();
     let activation_2 = Sigmoid::default();
-    let layers: Vec<Box<dyn Layer>> = vec![Box::new(layer_1), Box::new(layer_2)];
-    let activations:Vec<Box<dyn Activation>> = vec![Box::new(activation_1), Box::new(activation_2)];
+    let layers: Vec<LayerType> = vec![LayerType::Dense(layer_1), LayerType::Dense(layer_2)];
+    let activations: Vec<ActivationFn> = vec![
+        ActivationFn::Sigmoid(activation_1),
+        ActivationFn::Sigmoid(activation_2),
+    ];
 
     let mut network = Network::new(layers, activations);
 

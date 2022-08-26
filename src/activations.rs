@@ -1,7 +1,12 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
+pub enum ActivationFn {
+    Tanh(Tanh),
+    Sigmoid(Sigmoid),
+    Relu(Relu),
+}
 
-#[typetag::serde(tag = "type", content = "value")]
 pub trait Activation {
     fn activation(&self, x: f32) -> f32;
     fn derivative(&self, x: f32) -> f32;
@@ -28,7 +33,7 @@ pub trait Activation {
 pub struct Tanh {
     input: Vec<f32>,
 }
-#[typetag::serde(name = "Tanh")]
+
 impl Activation for Tanh {
     fn activation(&self, x: f32) -> f32 {
         x.tanh()
@@ -52,7 +57,6 @@ pub struct Sigmoid {
     input: Vec<f32>,
 }
 
-#[typetag::serde(name = "Sigmoid")]
 impl Activation for Sigmoid {
     fn activation(&self, x: f32) -> f32 {
         1f32 / (1f32 + f32::exp(-x))
@@ -76,7 +80,6 @@ pub struct Relu {
     input: Vec<f32>,
 }
 
-#[typetag::serde(name = "Relu")]
 impl Activation for Relu {
     fn activation(&self, x: f32) -> f32 {
         f32::max(0f32, x)
@@ -84,9 +87,9 @@ impl Activation for Relu {
 
     fn derivative(&self, x: f32) -> f32 {
         if x > 0f32 {
-            return 1f32
+            return 1f32;
         }
-        return 0f32
+        return 0f32;
     }
 
     fn set_input(&mut self, input: &[f32]) {

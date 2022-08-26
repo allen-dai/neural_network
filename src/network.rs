@@ -1,19 +1,19 @@
-use crate::activations::Activation;
-use crate::layer::{Layer, FOut};
+use crate::activations::{Activation, ActivationFn};
+use crate::layer::{FOut, LayerType};
 use crate::loss::Loss;
+use serde::{Deserialize, Serialize};
 use std::fs;
-use std::io::{BufReader, Read, Write};
+use std::io::Write;
 use std::path::Path;
-use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Network {
-    layers: Vec<Box<dyn Layer>>,
-    activations: Vec<Box<dyn Activation>>,
+    layers: Vec<LayerType>,
+    activations: Vec<ActivationFn>,
 }
 
 impl Network {
-    pub fn new(layers: Vec<Box<dyn Layer>>, activations: Vec<Box<dyn Activation>>) -> Self {
+    pub fn new(layers: Vec<LayerType>, activations: Vec<ActivationFn>) -> Self {
         Network {
             layers,
             activations,
@@ -27,14 +27,25 @@ impl Network {
         // "reshape" to the output accordingly.
         //
         // Layer type can be known after output. (i.e. FOut::Conv | FOut::Dense )
-        for (layer, activation_fn) in self.layers.iter_mut().zip(self.activations.iter_mut()) {
-            let layer_output = layer.f_prop(&output);
-            match layer_output {
-                // Reshape if next layer is dense, continue otherwise
-                FOut::Conv(v) => todo!(),
-                FOut::Dense(v) => output = v,
+        for (layer_type, activation_fn) in self.layers.iter_mut().zip(self.activations.iter_mut()) {
+            match layer_type {
+                LayerType::Dense(layer) => {
+                    let layer_output = layer.f_prop(&output);
+                    match layer_output {
+                        // Reshape if next layer is dense, continue otherwise
+                        FOut::Conv(v) => todo!(),
+                        FOut::Dense(v) => output = v,
+                    }
+                    match activation_fn {
+                        ActivationFn::Tanh(_) => todo!(),
+                        ActivationFn::Sigmoid(sigmoid) => {
+                            output = sigmoid.f_prop(&output);
+                        }
+                        ActivationFn::Relu(_) => todo!(),
+                    }
+                }
+                LayerType::Conv(_) => todo!(),
             }
-            output = activation_fn.f_prop(&output);
         }
         output
     }
@@ -57,14 +68,25 @@ impl Network {
                 loss += loss_fn.loss(&y, &output);
                 gradient = loss_fn.loss_prime(&y, &output);
 
-                for (layer, activation_fn) in self
+                for (layer_type, activation_fn) in self
                     .layers
                     .iter_mut()
                     .zip(self.activations.iter_mut())
                     .rev()
                 {
-                    gradient = activation_fn.b_prop(&gradient);
-                    gradient = layer.b_prop(&gradient, learning_rate);
+                    match activation_fn {
+                        ActivationFn::Tanh(_) => todo!(),
+                        ActivationFn::Sigmoid(sigmoid) => {
+                            gradient = sigmoid.b_prop(&gradient);
+                        }
+                        ActivationFn::Relu(_) => todo!(),
+                    }
+                    match layer_type {
+                        LayerType::Dense(layer) => {
+                            gradient = layer.b_prop(&gradient, learning_rate);
+                        }
+                        LayerType::Conv(_) => todo!(),
+                    }
                 }
             }
 
@@ -81,24 +103,19 @@ impl Network {
         Ok(())
     }
 
-    pub fn load_from_file(&mut self, path: impl AsRef<Path>) -> Result<(), Box<dyn std::error::Error>> {
-        let mut bytes = Vec::new();
-        let mut f = fs::File::open(path)?;
-        f.read_to_end(&mut bytes)?;
-        let cbor = &mut serde_cbor::Deserializer::from_slice(&bytes);
-        let mut erased = Box::new(<dyn erased_serde::Deserializer>::erase(cbor));
-        let network: Self = erased_serde::deserialize(erased.as_mut())?;
+    pub fn load_from_file(
+        &mut self,
+        path: impl AsRef<Path>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let f = fs::File::open(path)?;
+        let network: Network = serde_cbor::from_reader(f)?;
         *self = network;
         Ok(())
     }
 
     pub fn from_file(path: impl AsRef<Path>) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut bytes = Vec::new();
-        let mut f = fs::File::open(path)?;
-        f.read_to_end(&mut bytes)?;
-        let cbor = &mut serde_cbor::Deserializer::from_slice(&bytes);
-        let mut erased = Box::new(<dyn erased_serde::Deserializer>::erase(cbor));
-        let network: Self = erased_serde::deserialize(erased.as_mut())?;
+        let f = fs::File::open(path)?;
+        let network: Network = serde_cbor::from_reader(f)?;
         Ok(network)
     }
 }

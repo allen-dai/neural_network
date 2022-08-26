@@ -1,20 +1,10 @@
-use neural_network::activations::Activation;
-use neural_network::activations::Sigmoid;
-use neural_network::activations::Tanh;
-use neural_network::layer::Layer;
-use neural_network::layer::dense::DenseLayer;
-use neural_network::loss::MSE;
-use neural_network::network::Network;
-
 use mnist::MnistLoader;
-
-use rand::thread_rng;
-use rand::Rng;
+use neural_network::network::Network;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let MnistLoader {
-        train_images,
-        train_labels,
+        train_images: _,
+        train_labels: _,
         test_images,
         test_labels,
     } = MnistLoader::new(
@@ -24,7 +14,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "./examples/mnist_data/t10k-labels-idx1-ubyte",
     )?;
 
-    let mut rng = thread_rng();
     let test_size = 10000;
     let test_range = 0..10000;
 

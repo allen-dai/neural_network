@@ -1,6 +1,6 @@
-use neural_network::activations::{Tanh, Activation};
-use neural_network::layer::Layer;
+use neural_network::activations::{Activation, Tanh};
 use neural_network::layer::dense::DenseLayer;
+use neural_network::layer::Layer;
 use neural_network::loss::MSE;
 use neural_network::network::Network;
 
@@ -11,7 +11,8 @@ fn main() {
     let activation_2 = Tanh::default();
 
     let layers: Vec<Box<dyn Layer>> = vec![Box::new(layer_1), Box::new(layer_2)];
-    let activations:Vec<Box<dyn Activation>> = vec![Box::new(activation_1), Box::new(activation_2)];
+    let activations: Vec<Box<dyn Activation>> =
+        vec![Box::new(activation_1), Box::new(activation_2)];
 
     let mut network = Network::new(layers, activations);
     let train_set = vec![

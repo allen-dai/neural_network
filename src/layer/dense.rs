@@ -1,4 +1,4 @@
-use super::{FOut, Layer};
+use super::FOut;
 use rand::thread_rng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -33,11 +33,8 @@ impl DenseLayer {
             biases,
         }
     }
-}
 
-#[typetag::serde(name = "DenseLayer")]
-impl Layer for DenseLayer {
-    fn f_prop(&mut self, input: &Vec<f32>) -> FOut {
+    pub fn f_prop(&mut self, input: &Vec<f32>) -> FOut {
         assert_eq!(self.input.len(), input.len());
 
         //println!("{} {}", self.biases.len(), self.weights[0].len());
@@ -59,7 +56,7 @@ impl Layer for DenseLayer {
         )
     }
 
-    fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
+    pub fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
         // dot product of output_gradient vec[_] * vec[input]
         let mut weight_grad: Vec<Vec<f32>> =
             Vec::with_capacity(output_gradient.len() * self.input.len());

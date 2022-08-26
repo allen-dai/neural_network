@@ -10,5 +10,4 @@ rand = "0.8"
 mnist = { git = "https://github.com/Allen-Dai/mnist"}
 serde = { version = "1.0.137", features = ["derive"] }
 serde_cbor = "0.11.2"
-typetag = "0.2.3"
-erased-serde = "0.3.22"
+getrandom = { version = "0.2", features = ["js"] }
