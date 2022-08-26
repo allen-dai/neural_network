@@ -27,8 +27,6 @@ pub trait Activation {
     }
 }
 
-//erased_serde::serialize_trait_object!(Activation);
-
 #[derive(Default, Serialize, Deserialize, PartialEq)]
 pub struct Tanh {
     input: Vec<f32>,
