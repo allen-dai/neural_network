@@ -118,4 +118,10 @@ impl Network {
         let network: Network = serde_cbor::from_reader(f)?;
         Ok(network)
     }
+
+    pub fn from_slice(&mut self, slice: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+        let network: Network = serde_cbor::from_reader(slice)?;
+        *self = network;
+        Ok(())
+    }
 }
