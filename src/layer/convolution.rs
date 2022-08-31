@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 pub struct ConvolutionLayer {
     input_shape: (usize, usize, usize), // (depth, width, height)
     output_shape: (usize, usize, usize),
-    kernel_shape: (usize, usize),
-    kernels: Vec<Vec<Vec<Vec<f32>>>>, // [ input_depth [ kernel_depth [ kernel=2d ] ] ] = 4d vec
-    biases: Vec<Vec<Vec<f32>>>, // Only 3d vec because u only need one block per depth of kernel,
+    kernel_shape: (usize, usize), // (depth, size)
+    kernels: Vec<Vec<Vec<f32>>>,  // [ input_depth [ kernel_depth [ kernel ] ] ] = 3d vec
+    biases: Vec<Vec<f32>>,        // 2d vec because u only need one block per depth of kernel,
 }
 
 impl ConvolutionLayer {
@@ -31,15 +31,9 @@ impl ConvolutionLayer {
             for _ in 0..kernel_depth {
                 let mut kernel_block = Vec::with_capacity(kernel_size);
                 let mut bias_block = Vec::with_capacity(kernel_size);
-                for _ in 0..kernel_size {
-                    let mut kernel_row = Vec::with_capacity(kernel_size);
-                    let mut bias_row = Vec::with_capacity(kernel_size);
-                    for _ in 0..kernel_size {
-                        kernel_row.push(rng.gen_range(-1f32..1f32));
-                        bias_row.push(rng.gen_range(-1f32..1f32));
-                    }
-                    kernel_block.push(kernel_row);
-                    bias_block.push(bias_row);
+                for _ in 0..kernel_size * kernel_size {
+                        kernel_block.push(rng.gen_range(-1f32..1f32));
+                        bias_block.push(rng.gen_range(-1f32..1f32));
                 }
                 biases.push(bias_block);
                 kernel.push(kernel_block);
@@ -57,7 +51,22 @@ impl ConvolutionLayer {
     }
 
     fn f_prop(&mut self, input: &Vec<f32>) -> FOut {
-        todo!()
+        let mut out: Vec<Vec<f32>> = Vec::with_capacity(self.kernels[0].len());
+        let kernel_size = self.kernel_shape.1;
+        let mut indices = Vec::with_capacity(kernel_size * kernel_size);
+        for row in 0..kernel_size {
+            for col in 0..kernel_size {
+                indices.push(col + row * kernel_size);
+            }
+        }
+
+        for (i, n) in input.iter().enumerate() {
+            if i % kernel_size == 0 {
+            }
+
+        }
+
+        FOut::Conv(out)
     }
 
     fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {

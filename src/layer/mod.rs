@@ -5,7 +5,7 @@ pub mod dense;
 
 // Forward prop output
 pub enum FOut {
-    Conv(Vec<Vec<Vec<f32>>>),
+    Conv(Vec<Vec<f32>>),
     Dense(Vec<f32>),
 }
 
