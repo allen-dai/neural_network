@@ -50,7 +50,7 @@ impl ConvolutionLayer {
         }
     }
 
-    fn f_prop(&mut self, input: &Vec<f32>) -> LayerOutput {
+    fn f_prop(&mut self, input: &Vec<Vec<f32>>) -> LayerOutput {
         let mut out: Vec<Vec<f32>> =
             vec![vec![0f32; self.kernels[0][0].len()]; self.kernels[0].len()];
         let kernel_size = self.kernel_shape.1;
@@ -61,26 +61,32 @@ impl ConvolutionLayer {
             }
         }
 
-        let mut inputs_at_indcies = vec![0f32; indices.len()];
+        let mut inputs_at_indcies = vec![vec![0f32; indices.len()]; input.len()];
         for _row in 0..self.input_shape.1 - kernel_size {
             for _col in 0..self.input_shape.2 - kernel_size {
                 // get inputs
                 for (i, index) in indices.iter().enumerate() {
-                    inputs_at_indcies[i] = input[*index];
+                    //depth of input
+                    for depth in 0..input.len() {
+                        inputs_at_indcies[depth][i] = input[depth][*index];
+                    }
                 }
 
                 // depth
-                for (depth, kernel) in self.kernels.iter().enumerate() {
+                for ((depth, kernel), inputs) in self
+                    .kernels
+                    .iter()
+                    .enumerate()
+                    .zip(inputs_at_indcies.iter_mut())
+                {
                     // block
                     for block in kernel.iter() {
-                        inputs_at_indcies = inputs_at_indcies
-                            .iter()
-                            .zip(block)
-                            .map(|(i, k)| i * k)
-                            .collect();
+                        for i in 0..inputs.len() {
+                            inputs[i] = inputs[i] * block[i];
+                        }
                     }
                     // add biases - base on depth
-                    out[depth] = inputs_at_indcies
+                    out[depth] = inputs
                         .iter()
                         .zip(self.biases[depth].iter())
                         .zip(out[depth].iter())
@@ -101,7 +107,10 @@ impl ConvolutionLayer {
 #[test]
 fn conv_init_f_prop() {
     let mut layer_d1 = ConvolutionLayer::new((1, 28, 28), (1, 20));
-    println!("{:?}", layer_d1.f_prop(&vec![1f32; 28 * 28]));
+    println!("{:?}", layer_d1.f_prop(&vec![vec![1f32; 28 * 28]]));
     let mut layer_d2 = ConvolutionLayer::new((2, 28, 28), (2, 20));
-    println!("{:?}", layer_d2.f_prop(&vec![1f32; 28 * 28]));
+    println!(
+        "{:?}",
+        layer_d2.f_prop(&vec![vec![1f32; 28 * 28], vec![1f32; 28 * 28]])
+    );
 }
