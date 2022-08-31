@@ -1,8 +1,8 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 enum LossFunction {
-    Mse(MSE)
+    Mse(MSE),
 }
 pub trait Loss {
     fn loss(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> f32;

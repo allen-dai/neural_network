@@ -9,7 +9,7 @@ pub enum LayerOutput {
     Conv(Vec<Vec<f32>>),
     Dense(Vec<f32>),
     #[default]
-    None
+    None,
 }
 
 #[derive(Serialize, Deserialize)]

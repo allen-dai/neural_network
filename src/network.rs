@@ -46,13 +46,11 @@ impl Network {
                         }
                     }
                 }
-                LayerType::Conv(layer) => {
-                    match output {
-                        LayerOutput::Conv(v) => output = layer.f_prop(&v),
-                        LayerOutput::Dense(v) => output = layer.f_prop(&vec![v]),
-                        LayerOutput::None => unreachable!(),
-                    }
-                }
+                LayerType::Conv(layer) => match output {
+                    LayerOutput::Conv(v) => output = layer.f_prop(&v),
+                    LayerOutput::Dense(v) => output = layer.f_prop(&vec![v]),
+                    LayerOutput::None => unreachable!(),
+                },
             }
         }
 
