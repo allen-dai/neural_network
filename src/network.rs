@@ -1,5 +1,5 @@
 use crate::activations::{Activation, ActivationFn};
-use crate::layer::{FOut, LayerType};
+use crate::layer::{LayerOutput, LayerType};
 use crate::loss::Loss;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -33,8 +33,8 @@ impl Network {
                     let layer_output = layer.f_prop(&output);
                     match layer_output {
                         // Reshape if next layer is dense, continue otherwise
-                        FOut::Conv(v) => todo!(),
-                        FOut::Dense(v) => output = v,
+                        LayerOutput::Conv(v) => todo!(),
+                        LayerOutput::Dense(v) => output = v,
                     }
                     match activation_fn {
                         ActivationFn::Tanh(_) => todo!(),

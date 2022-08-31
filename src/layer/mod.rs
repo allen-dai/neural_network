@@ -5,7 +5,7 @@ pub mod dense;
 
 // Forward prop output
 #[derive(Debug)]
-pub enum FOut {
+pub enum LayerOutput {
     Conv(Vec<Vec<f32>>),
     Dense(Vec<f32>),
 }

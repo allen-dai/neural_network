@@ -1,4 +1,4 @@
-use super::FOut;
+use super::LayerOutput;
 use rand::thread_rng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -50,7 +50,7 @@ impl ConvolutionLayer {
         }
     }
 
-    fn f_prop(&mut self, input: &Vec<f32>) -> FOut {
+    fn f_prop(&mut self, input: &Vec<f32>) -> LayerOutput {
         let mut out: Vec<Vec<f32>> =
             vec![vec![0f32; self.kernels[0][0].len()]; self.kernels[0].len()];
         let kernel_size = self.kernel_shape.1;
@@ -90,7 +90,7 @@ impl ConvolutionLayer {
             }
             indices = indices.iter().map(|i| *i + self.input_shape.1).collect();
         }
-        FOut::Conv(out)
+        LayerOutput::Conv(out)
     }
 
     fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {

@@ -1,4 +1,4 @@
-use super::FOut;
+use super::LayerOutput;
 use rand::thread_rng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -34,12 +34,12 @@ impl DenseLayer {
         }
     }
 
-    pub fn f_prop(&mut self, input: &Vec<f32>) -> FOut {
+    pub fn f_prop(&mut self, input: &Vec<f32>) -> LayerOutput {
         assert_eq!(self.input.len(), input.len());
 
         //println!("{} {}", self.biases.len(), self.weights[0].len());
         self.input = input.to_vec();
-        FOut::Dense(
+        LayerOutput::Dense(
             self.weights
                 .iter()
                 //y.j = x.i * w.j.i
