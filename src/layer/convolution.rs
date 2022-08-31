@@ -50,7 +50,7 @@ impl ConvolutionLayer {
         }
     }
 
-    fn f_prop(&mut self, input: &Vec<Vec<f32>>) -> LayerOutput {
+    pub fn f_prop(&mut self, input: &Vec<Vec<f32>>) -> LayerOutput {
         let mut out: Vec<Vec<f32>> =
             vec![vec![0f32; self.kernels[0][0].len()]; self.kernels[0].len()];
         let kernel_size = self.kernel_shape.1;
@@ -99,7 +99,7 @@ impl ConvolutionLayer {
         LayerOutput::Conv(out)
     }
 
-    fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
+    pub fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
         todo!()
     }
 }

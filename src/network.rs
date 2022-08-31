@@ -21,33 +21,45 @@ impl Network {
     }
 
     pub fn predict(&mut self, input: &Vec<f32>) -> Vec<f32> {
-        let mut output = input.clone();
-
-        // May need to iterate with indcies, because we need to know the type of layer then do
-        // "reshape" to the output accordingly.
-        //
-        // Layer type can be known after output. (i.e. FOut::Conv | FOut::Dense )
+        let mut output = LayerOutput::Dense(input.clone());
         for (layer_type, activation_fn) in self.layers.iter_mut().zip(self.activations.iter_mut()) {
             match layer_type {
                 LayerType::Dense(layer) => {
-                    let layer_output = layer.f_prop(&output);
-                    match layer_output {
-                        // Reshape if next layer is dense, continue otherwise
-                        LayerOutput::Conv(v) => todo!(),
-                        LayerOutput::Dense(v) => output = v,
+                    match output {
+                        // currenty just flattening the vector. not sure if this is the proper way
+                        // to do it.
+                        LayerOutput::Conv(v) => {
+                            output = layer.f_prop(&v.into_iter().flatten().collect());
+                        }
+                        LayerOutput::Dense(v) => output = layer.f_prop(&v),
+                        LayerOutput::None => unreachable!(),
                     }
                     match activation_fn {
-                        ActivationFn::Tanh(_) => todo!(),
+                        ActivationFn::Tanh(tanh) => {
+                            output = tanh.f_prop(&output);
+                        }
                         ActivationFn::Sigmoid(sigmoid) => {
                             output = sigmoid.f_prop(&output);
                         }
-                        ActivationFn::Relu(_) => todo!(),
+                        ActivationFn::Relu(relu) => {
+                            output = relu.f_prop(&output);
+                        }
                     }
                 }
-                LayerType::Conv(_) => todo!(),
+                LayerType::Conv(layer) => {
+                    match output {
+                        LayerOutput::Conv(v) => output = layer.f_prop(&v),
+                        LayerOutput::Dense(v) => output = layer.f_prop(&vec![v]),
+                        LayerOutput::None => unreachable!(),
+                    }
+                }
             }
         }
-        output
+
+        match output {
+            LayerOutput::Conv(_) | LayerOutput::None => unreachable!(),
+            LayerOutput::Dense(prediction) => prediction,
+        }
     }
 
     pub fn train<L: Loss>(

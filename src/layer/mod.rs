@@ -4,10 +4,12 @@ pub mod convolution;
 pub mod dense;
 
 // Forward prop output
-#[derive(Debug)]
+#[derive(Default, Debug, Serialize, Deserialize, PartialEq)]
 pub enum LayerOutput {
     Conv(Vec<Vec<f32>>),
     Dense(Vec<f32>),
+    #[default]
+    None
 }
 
 #[derive(Serialize, Deserialize)]
