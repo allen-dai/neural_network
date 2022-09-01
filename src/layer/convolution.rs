@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, PartialEq)]
 pub struct ConvolutionLayer {
+    input: Vec<Vec<f32>>,
     input_shape: (usize, usize, usize), // (depth, width, height)
     output_shape: (usize, usize, usize),
     kernel_shape: (usize, usize), // (depth, size)
@@ -40,8 +41,8 @@ impl ConvolutionLayer {
             }
             kernels.push(kernel);
         }
-
         Self {
+            input: vec![],
             input_shape,
             output_shape,
             kernel_shape,
@@ -51,66 +52,109 @@ impl ConvolutionLayer {
     }
 
     pub fn f_prop(&mut self, input: &Vec<Vec<f32>>) -> LayerOutput {
+        self.input = input.clone();
         let mut out: Vec<Vec<f32>> =
-            vec![vec![0f32; self.kernels[0][0].len()]; self.kernels[0].len()];
+            vec![vec![0f32; self.output_shape.1 * self.output_shape.2]; self.output_shape.0];
         let kernel_size = self.kernel_shape.1;
-        let mut indices = Vec::with_capacity(kernel_size * kernel_size);
-        for row in 0..kernel_size {
-            for col in 0..kernel_size {
-                indices.push(col + row * kernel_size);
-            }
-        }
-
-        let mut inputs_at_indcies = vec![vec![0f32; indices.len()]; input.len()];
-        for _row in 0..self.input_shape.1 - kernel_size {
-            for _col in 0..self.input_shape.2 - kernel_size {
-                // get inputs
-                for (i, index) in indices.iter().enumerate() {
-                    //depth of input
-                    for depth in 0..input.len() {
-                        inputs_at_indcies[depth][i] = input[depth][*index];
-                    }
-                }
-
-                // depth
-                for ((depth, kernel), inputs) in self
-                    .kernels
-                    .iter()
-                    .enumerate()
-                    .zip(inputs_at_indcies.iter_mut())
-                {
-                    // block
-                    for block in kernel.iter() {
-                        for i in 0..inputs.len() {
-                            inputs[i] = inputs[i] * block[i];
-                        }
-                    }
-                    // add biases - base on depth
-                    out[depth] = inputs
-                        .iter()
-                        .zip(self.biases[depth].iter())
-                        .zip(out[depth].iter())
-                        .map(|((i, k), o)| i * k + o)
-                        .collect();
+        let chunks = Self::correlation_chunks(&input, &self.input_shape, kernel_size);
+        for (depth, (kernel, chunk)) in self.kernels.iter().zip(chunks).enumerate() {
+            for block in kernel {
+                // chunk is all the movements ( all the slidings ) for the current kernel
+                for (i, mov) in chunk.iter().enumerate() {
+                    out[depth][i] = mov.iter().zip(block).map(|(m, k)| m * k).sum::<f32>();
                 }
             }
-            indices = indices.iter().map(|i| *i + self.input_shape.1).collect();
         }
         LayerOutput::Conv(out)
     }
 
     pub fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
+        // output_gradient =  dE / dY
+        //
+        // the output gradient is going to be 1d ( since we flatten our output to 1d array in forward
+        // propagation ), as long as we know our kernel size, we can get the individual block of
+        // output of our kernels.
+        //
+        // since the activation layer store its input as an enum (output of layer), the activation layer
+        // can also decipher the output base on the type of layer it is responsible to. However, we
+        // might not need to do it in the activation layer since we can just flatten the input.
+        let mut og = Vec::new();
+        for chunk in output_gradient.chunks(self.output_shape.0).into_iter() {
+            og.push(chunk);
+        }
+
+        // cross correlation between output_gradient and input
+        let mut kernel_gradient = vec![vec![]; self.input_shape.0];
+        let kg_chunks =
+            Self::correlation_chunks(&self.input, &self.input_shape, self.output_shape.1);
+        for (depth, (chunk, grad)) in kg_chunks.iter().zip(og).enumerate() {
+            for mov in chunk {
+                kernel_gradient[depth].push(mov.iter().zip(grad).map(|(m, k)| m * k).sum::<f32>());
+            }
+        }
+
+        // Full correlation between output_gradient and input
+        //let mut input_gradient = Vec::new();
+        //
+        //let mut input_grendient = Vec::new();
+        for (i, chunk) in output_gradient
+            .chunks(self.output_shape.1 * self.output_shape.2)
+            .into_iter()
+            .enumerate()
+        {}
+
         todo!()
+    }
+
+    fn correlation_chunks(
+        input: &Vec<Vec<f32>>,
+        input_shape: &(usize, usize, usize),
+        size: usize,
+    ) -> Vec<Vec<Vec<f32>>> {
+        let mut out = Vec::new();
+        let mut indices = Vec::new();
+        for depth in 0..input_shape.0 {
+            let mut d = Vec::new();
+            for row in 0..size {
+                for col in 0..size {
+                    d.push(col + row * input_shape.0);
+                }
+            }
+            indices.push(d);
+        }
+        println!("indecisss {:?}", indices);
+        for depth in 0..input_shape.0 {
+            let mut d = Vec::new();
+            for row in 0..input_shape.0 - size + 1 {
+                for col in 0..input_shape.1 - size + 1 {
+                    let mut tmp = Vec::new();
+                    for i in indices[depth].iter() {
+                        tmp.push(input[depth][*i + col]);
+                    }
+                    d.push(tmp);
+                }
+                indices[depth] = indices[depth].iter().map(|i| i + input_shape.1).collect();
+            }
+            out.push(d);
+        }
+        println!("out {:?}", out);
+        out
     }
 }
 
 #[test]
 fn conv_init_f_prop() {
-    let mut layer_d1 = ConvolutionLayer::new((1, 28, 28), (1, 20));
-    println!("{:?}", layer_d1.f_prop(&vec![vec![1f32; 28 * 28]]));
-    let mut layer_d2 = ConvolutionLayer::new((2, 28, 28), (2, 20));
+    let mut l1 = ConvolutionLayer::new((1, 3, 3), (1, 2));
+    let test: Vec<f32> = (0..9).into_iter().map(|i| i as f32).collect();
+    println!("{:?}", l1.f_prop(&vec![test]));
+
+    let mut l2 = ConvolutionLayer::new((2, 28, 28), (2, 5));
+    let test28: Vec<f32> = (0..28 * 28).into_iter().map(|i| i as f32).collect();
+    println!("{:?}", l2.f_prop(&vec![test28.clone(), test28.clone()]));
+
+    let mut l3 = ConvolutionLayer::new((3, 28, 28), (3, 5));
     println!(
         "{:?}",
-        layer_d2.f_prop(&vec![vec![1f32; 28 * 28], vec![1f32; 28 * 28]])
-    );
+        l3.f_prop(&vec![test28.clone(), test28.clone(), test28.clone()])
+    )
 }

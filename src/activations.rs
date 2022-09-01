@@ -29,19 +29,26 @@ pub trait Activation {
                 self.set_input(LayerOutput::Dense(input.clone()));
                 LayerOutput::Dense(input.iter().map(|i| self.activation(*i)).collect())
             }
-            LayerOutput::None => unreachable!(),
+            _ => unreachable!(),
         }
     }
 
     fn b_prop(&self, output_gradient: &[f32]) -> Vec<f32> {
         match self.get_input() {
-            LayerOutput::Conv(_) => todo!(),
+            LayerOutput::Conv(input_2d) => input_2d
+                .clone()
+                .into_iter()
+                .flatten()
+                .zip(output_gradient.iter())
+                .map(|(i, og)| self.derivative(i) * og)
+                .collect(),
+
             LayerOutput::Dense(input) => input
                 .iter()
                 .zip(output_gradient.iter())
                 .map(|(i, og)| self.derivative(*i) * og)
                 .collect(),
-            LayerOutput::None => todo!(),
+            _ => unreachable!(),
         }
     }
 }

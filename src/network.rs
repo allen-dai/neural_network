@@ -32,7 +32,7 @@ impl Network {
                             output = layer.f_prop(&v.into_iter().flatten().collect());
                         }
                         LayerOutput::Dense(v) => output = layer.f_prop(&v),
-                        LayerOutput::None => unreachable!(),
+                        _ => unreachable!(),
                     }
                     match activation_fn {
                         ActivationFn::Tanh(tanh) => {
@@ -49,13 +49,13 @@ impl Network {
                 LayerType::Conv(layer) => match output {
                     LayerOutput::Conv(v) => output = layer.f_prop(&v),
                     LayerOutput::Dense(v) => output = layer.f_prop(&vec![v]),
-                    LayerOutput::None => unreachable!(),
+                    _ => unreachable!(),
                 },
             }
         }
 
         match output {
-            LayerOutput::Conv(_) | LayerOutput::None => unreachable!(),
+            LayerOutput::Conv(_) | LayerOutput::None => unreachable!("Last layer need to be a dense layer"),
             LayerOutput::Dense(prediction) => prediction,
         }
     }
@@ -76,6 +76,7 @@ impl Network {
                 output = self.predict(&x);
 
                 loss += loss_fn.loss(&y, &output);
+
                 gradient = loss_fn.loss_prime(&y, &output);
 
                 for (layer_type, activation_fn) in self
@@ -85,17 +86,23 @@ impl Network {
                     .rev()
                 {
                     match activation_fn {
-                        ActivationFn::Tanh(_) => todo!(),
+                        ActivationFn::Tanh(tanh) => {
+                            gradient = tanh.b_prop(&gradient);
+                        }
                         ActivationFn::Sigmoid(sigmoid) => {
                             gradient = sigmoid.b_prop(&gradient);
                         }
-                        ActivationFn::Relu(_) => todo!(),
+                        ActivationFn::Relu(relu) => {
+                            gradient = relu.b_prop(&gradient);
+                        }
                     }
                     match layer_type {
                         LayerType::Dense(layer) => {
                             gradient = layer.b_prop(&gradient, learning_rate);
                         }
-                        LayerType::Conv(_) => todo!(),
+                        LayerType::Conv(layer) => {
+                            gradient = layer.b_prop(&gradient, learning_rate);
+                        }
                     }
                 }
             }
