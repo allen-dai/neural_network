@@ -80,18 +80,35 @@ impl ConvolutionLayer {
         // might not need to do it in the activation layer since we can just flatten the input.
         let mut og = Vec::new();
         for chunk in output_gradient.chunks(self.output_shape.0).into_iter() {
-            og.push(chunk);
+            og.push(chunk.to_vec());
         }
 
         // cross correlation between output_gradient and input
         let mut kernel_gradient = vec![vec![]; self.input_shape.0];
         let kg_chunks =
             Self::correlation_chunks(&self.input, &self.input_shape, self.output_shape.1);
-        for (depth, (chunk, grad)) in kg_chunks.iter().zip(og).enumerate() {
+        for (depth, (chunk, grad)) in kg_chunks.iter().zip(og.iter()).enumerate() {
             for mov in chunk {
                 kernel_gradient[depth].push(mov.iter().zip(grad).map(|(m, k)| m * k).sum::<f32>());
             }
         }
+        self.kernels = self
+            .kernels
+            .iter()
+            .zip(og.iter())
+            .map(|(kernel_depth, gradients)| {
+                kernel_depth
+                    .iter()
+                    .map(|kernel| {
+                        kernel
+                            .iter()
+                            .zip(gradients.iter())
+                            .map(|(k, g)| k - g * learning_rate)
+                            .collect()
+                    })
+                    .collect()
+            })
+            .collect();
 
         // Full correlation between output_gradient and input
         //let mut input_gradient = Vec::new();

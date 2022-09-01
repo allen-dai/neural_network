@@ -55,7 +55,9 @@ impl Network {
         }
 
         match output {
-            LayerOutput::Conv(_) | LayerOutput::None => unreachable!("Last layer need to be a dense layer"),
+            LayerOutput::Conv(_) | LayerOutput::None => {
+                unreachable!("Last layer need to be a dense layer")
+            }
             LayerOutput::Dense(prediction) => prediction,
         }
     }
