@@ -152,8 +152,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         correct / test_size as f32 * 100.0,
     );
 
-    println!("Model saved to ./models/mnist");
-    network.save_to_file("./models/mnist").unwrap();
+    println!("Model saved to ./models/mnist_conv");
+    network.save_to_file("./models/mnist_conv").unwrap();
 
     Ok(())
 }

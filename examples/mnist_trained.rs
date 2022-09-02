@@ -39,7 +39,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Loading Model...");
 
-    let mut network = Network::from_file("./models/mnist").unwrap();
+    let mut network = Network::from_file("./models/mnist_conv").unwrap();
 
     println!("Model loaded, starting to test...\n\n");
 
