@@ -1,5 +1,5 @@
 use crate::activations::{Activation, ActivationFn};
-use crate::layer::{FOut, LayerType};
+use crate::layer::{LayerOutput, LayerType};
 use crate::loss::Loss;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -21,33 +21,48 @@ impl Network {
     }
 
     pub fn predict(&mut self, input: &Vec<f32>) -> Vec<f32> {
-        let mut output = input.clone();
-
-        // May need to iterate with indcies, because we need to know the type of layer then do
-        // "reshape" to the output accordingly.
-        //
-        // Layer type can be known after output. (i.e. FOut::Conv | FOut::Dense )
+        let mut output = LayerOutput::Dense(input.clone());
         for (layer_type, activation_fn) in self.layers.iter_mut().zip(self.activations.iter_mut()) {
             match layer_type {
                 LayerType::Dense(layer) => {
-                    let layer_output = layer.f_prop(&output);
-                    match layer_output {
-                        // Reshape if next layer is dense, continue otherwise
-                        FOut::Conv(v) => todo!(),
-                        FOut::Dense(v) => output = v,
-                    }
-                    match activation_fn {
-                        ActivationFn::Tanh(_) => todo!(),
-                        ActivationFn::Sigmoid(sigmoid) => {
-                            output = sigmoid.f_prop(&output);
+                    match output {
+                        // currenty just flattening the vector. not sure if this is the proper way
+                        // to do it.
+                        LayerOutput::Conv(v) => {
+                            output = layer.f_prop(&v.into_iter().flatten().collect());
                         }
-                        ActivationFn::Relu(_) => todo!(),
+                        LayerOutput::Dense(v) => {
+                            output = layer.f_prop(&v);
+                        }
+                        _ => unreachable!(),
                     }
                 }
-                LayerType::Conv(_) => todo!(),
+                LayerType::Conv(layer) => match output {
+                    LayerOutput::Conv(v) => output = layer.f_prop(&v),
+                    LayerOutput::Dense(v) => output = layer.f_prop(&vec![v]),
+                    _ => unreachable!(),
+                },
+            }
+
+            match activation_fn {
+                ActivationFn::Tanh(tanh) => {
+                    output = tanh.f_prop(&output);
+                }
+                ActivationFn::Sigmoid(sigmoid) => {
+                    output = sigmoid.f_prop(&output);
+                }
+                ActivationFn::Relu(relu) => {
+                    output = relu.f_prop(&output);
+                }
             }
         }
-        output
+
+        match output {
+            LayerOutput::Conv(_) | LayerOutput::None => {
+                unreachable!("Last layer need to be a dense layer")
+            }
+            LayerOutput::Dense(prediction) => prediction,
+        }
     }
 
     pub fn train<L: Loss>(
@@ -66,6 +81,7 @@ impl Network {
                 output = self.predict(&x);
 
                 loss += loss_fn.loss(&y, &output);
+
                 gradient = loss_fn.loss_prime(&y, &output);
 
                 for (layer_type, activation_fn) in self
@@ -75,17 +91,23 @@ impl Network {
                     .rev()
                 {
                     match activation_fn {
-                        ActivationFn::Tanh(_) => todo!(),
+                        ActivationFn::Tanh(tanh) => {
+                            gradient = tanh.b_prop(&gradient);
+                        }
                         ActivationFn::Sigmoid(sigmoid) => {
                             gradient = sigmoid.b_prop(&gradient);
                         }
-                        ActivationFn::Relu(_) => todo!(),
+                        ActivationFn::Relu(relu) => {
+                            gradient = relu.b_prop(&gradient);
+                        }
                     }
                     match layer_type {
                         LayerType::Dense(layer) => {
                             gradient = layer.b_prop(&gradient, learning_rate);
                         }
-                        LayerType::Conv(_) => todo!(),
+                        LayerType::Conv(layer) => {
+                            gradient = layer.b_prop(&gradient, learning_rate);
+                        }
                     }
                 }
             }

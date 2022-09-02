@@ -1,8 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 pub trait Loss {
     fn loss(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> f32;
     fn loss_prime(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> Vec<f32>;
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct MSE;
 impl Loss for MSE {
     fn loss(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> f32 {
