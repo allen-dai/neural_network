@@ -31,19 +31,10 @@ impl Network {
                         LayerOutput::Conv(v) => {
                             output = layer.f_prop(&v.into_iter().flatten().collect());
                         }
-                        LayerOutput::Dense(v) => output = layer.f_prop(&v),
+                        LayerOutput::Dense(v) => {
+                            output = layer.f_prop(&v);
+                        }
                         _ => unreachable!(),
-                    }
-                    match activation_fn {
-                        ActivationFn::Tanh(tanh) => {
-                            output = tanh.f_prop(&output);
-                        }
-                        ActivationFn::Sigmoid(sigmoid) => {
-                            output = sigmoid.f_prop(&output);
-                        }
-                        ActivationFn::Relu(relu) => {
-                            output = relu.f_prop(&output);
-                        }
                     }
                 }
                 LayerType::Conv(layer) => match output {
@@ -51,6 +42,18 @@ impl Network {
                     LayerOutput::Dense(v) => output = layer.f_prop(&vec![v]),
                     _ => unreachable!(),
                 },
+            }
+
+            match activation_fn {
+                ActivationFn::Tanh(tanh) => {
+                    output = tanh.f_prop(&output);
+                }
+                ActivationFn::Sigmoid(sigmoid) => {
+                    output = sigmoid.f_prop(&output);
+                }
+                ActivationFn::Relu(relu) => {
+                    output = relu.f_prop(&output);
+                }
             }
         }
 

@@ -132,9 +132,7 @@ impl ConvolutionLayer {
 
         // Full correlation between output_gradient and kernel
         //let mut input_grendient = Vec::new();
-        Self::full_correlation_chunks(&og, &self.output_shape, self.kernel_shape.1);
-
-        todo!()
+        Self::input_gradient(&og, &self.output_shape, &self.kernels, self.kernel_shape.1)
     }
 
     fn correlation_chunks(
@@ -170,65 +168,117 @@ impl ConvolutionLayer {
         out
     }
 
-    fn full_correlation_chunks(
-        input: &Vec<Vec<f32>>,
-        input_shape: &(usize, usize, usize),
+    fn input_gradient(
+        output_gradient: &Vec<Vec<f32>>,
+        og_shape: &(usize, usize, usize),
+        kernels: &Vec<Vec<Vec<f32>>>,
         size: usize,
-    ) -> Vec<Vec<Vec<f32>>> {
+    ) -> Vec<f32> {
         let mut col_indices = Vec::new();
+        let mut out_col_indices = Vec::new();
         let mut tmp = VecDeque::new();
+        let mut out_tmp = VecDeque::new();
         let mut index = 0;
         //for _ in 0..input_shape.1 - size + 2 {
-        for _ in 0..input_shape.1 {
-            //println!("{:?}", tmp);
+        for _ in 0..og_shape.1 {
             if tmp.is_empty() || tmp.len() < size {
                 tmp.push_back(index);
+                out_tmp.push_back(index);
                 index += 1;
             } else if tmp.len() == size {
                 tmp.pop_front().expect("size should not be 0");
                 tmp.push_back(tmp[tmp.len() - 1] + 1);
             }
             col_indices.push(tmp.clone());
+            out_col_indices.push(out_tmp.clone());
         }
         for _ in 0..2 {
             tmp.pop_front().expect("size should not be 0");
+            out_tmp.pop_front().expect("size should not be 0");
             if !tmp.is_empty() {
                 col_indices.push(tmp.clone());
+                out_col_indices.push(out_tmp.clone());
             }
         }
         let row_indcies: Vec<usize> = col_indices.iter().map(|col| col.len()).collect();
-        let mut d: Vec<Vec<Vec<usize>>> = Vec::new();
+        let mut output_indices: Vec<Vec<Vec<usize>>> = Vec::new();
+        let mut input_indices: Vec<Vec<Vec<usize>>> = Vec::new();
         let mut col_idx = 0;
+        let mut out_col_idx = 0;
         let mut count = 1;
-        for R in row_indcies.iter() {
-            let mut tmp: Vec<Vec<usize>> = vec![vec![]; col_indices.len()];
+        let mut out_count = 0;
+        for (row_i, R) in row_indcies.iter().enumerate() {
+            let mut in_tmp: Vec<Vec<usize>> = vec![vec![]; col_indices.len()];
+            let mut out_tmp: Vec<Vec<usize>> = vec![vec![]; col_indices.len()];
             for row in 0..*R {
-                for (tmp, col) in tmp.iter_mut().zip(col_indices.iter()) {
+                for ((input_tmp, output_tmp), (col, out_col)) in in_tmp
+                    .iter_mut()
+                    .zip(out_tmp.iter_mut())
+                    .zip(col_indices.iter().zip(out_col_indices.iter()))
+                {
                     for c in col {
-                        tmp.push(c + input_shape.1 * col_idx)
+                        input_tmp.push(c + og_shape.1 * col_idx);
+                    }
+                    for c in out_col {
+                        output_tmp.push(c + size * out_col_idx);
                     }
                 }
                 col_idx += 1;
+                out_col_idx += 1;
             }
             col_idx = 0;
-                println!("{} {}", R, size);
+            out_col_idx = 0;
+            //println!("{} {}", R, size);
             if R == &size || count > 1 {
                 col_idx = count;
                 count += 1;
             }
-            d.push(tmp);
+
+            /* if count > 1 && R < &size {
+                out_count += 1;
+                out_col_idx = out_count;
+            } */
+
+            if count > 1 {
+                if R < &size || row_indcies[row_i + 1] < size {
+                    out_count += 1;
+                    out_col_idx = out_count;
+                }
+            }
+            input_indices.push(in_tmp);
+            output_indices.push(out_tmp);
         }
-        //println!("{:?}", col_indices);
-        //println!("{:?}", row_indcies);
-        for x in d {
-            println!("{:?}", x);
+        /* for i in input_indices.iter() {
+            println!("{:?}", i);
         }
-        todo!()
+        println!("\n");
+        for o in output_indices.iter() {
+            println!("{:?}", o);
+        } */
+        let mut out = Vec::new();
+        // iterating through depth
+        for (og, kernel) in output_gradient.iter().zip(kernels.iter()) {
+            // block: the depth of the input. (vertical). kernel depth is horizontal
+            let mut tmp = Vec::new();
+            for block in kernel {
+                for (ir, or) in input_indices.iter().zip(output_indices.iter()) {
+                    for (ic, oc) in ir.iter().zip(or.iter()) {
+                        let mut row_tmp = Vec::new();
+                        for (i_idx, o_idx) in ic.iter().zip(oc.iter()) {
+                            row_tmp.push(og[*i_idx] * block[*o_idx]);
+                        }
+                        tmp.push(row_tmp.iter().sum());
+                    }
+                }
+            }
+            out.extend_from_slice(&tmp);
+        }
+        out
     }
 }
 
 #[test]
-fn conv_init_f_prop() {
+fn conv_init_fb_prop() {
     let mut l1 = ConvolutionLayer::new((1, 8, 8), (1, 3));
     let test: Vec<f32> = (0..8 * 8).into_iter().map(|i| i as f32).collect();
     let l1_out = l1.f_prop(&vec![test]);
@@ -236,6 +286,7 @@ fn conv_init_f_prop() {
 
     let mut l2 = ConvolutionLayer::new((2, 28, 28), (2, 5));
     let test28: Vec<f32> = (0..28 * 28).into_iter().map(|i| i as f32).collect();
+    let l2_out = l2.f_prop(&vec![test28.clone(), test28.clone()]);
     //println!("{:?}", l2.f_prop(&vec![test28.clone(), test28.clone()]));
 
     let mut l3 = ConvolutionLayer::new((3, 28, 28), (3, 5));
@@ -251,4 +302,12 @@ fn conv_init_f_prop() {
         LayerOutput::Dense(_) => todo!(),
         LayerOutput::None => todo!(),
     }
+
+    /* match l2_out {
+        LayerOutput::Conv(out) => {
+            l2.b_prop(&out.into_iter().flatten().collect(), 0.1);
+        }
+        LayerOutput::Dense(_) => todo!(),
+        LayerOutput::None => todo!(),
+    } */
 }
