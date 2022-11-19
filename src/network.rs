@@ -6,10 +6,10 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Network {
-    layers: Vec<LayerType>,
-    activations: Vec<ActivationFn>,
+    pub(crate) layers: Vec<LayerType>,
+    pub(crate) activations: Vec<ActivationFn>,
 }
 
 impl Network {

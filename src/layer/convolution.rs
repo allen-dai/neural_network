@@ -4,7 +4,7 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 
-#[derive(Serialize, Deserialize, PartialEq)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub struct ConvolutionLayer {
     input: Vec<Vec<f32>>,
     input_shape: (usize, usize, usize), // (depth, width, height)

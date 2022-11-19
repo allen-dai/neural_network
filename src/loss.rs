@@ -5,7 +5,7 @@ pub trait Loss {
     fn loss_prime(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> Vec<f32>;
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
 pub struct MSE;
 impl Loss for MSE {
     fn loss(&self, truth: &Vec<f32>, prediction: &Vec<f32>) -> f32 {

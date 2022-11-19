@@ -3,7 +3,7 @@ use rand::thread_rng;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, PartialEq)]
+#[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub struct DenseLayer {
     pub input: Vec<f32>,
     pub weights: Vec<Vec<f32>>, //vec[nth neuron][weights]

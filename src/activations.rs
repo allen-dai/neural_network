@@ -1,7 +1,7 @@
 use super::layer::LayerOutput;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize,  Clone)]
 pub enum ActivationFn {
     Tanh(Tanh),
     Sigmoid(Sigmoid),
@@ -53,7 +53,7 @@ pub trait Activation {
     }
 }
 
-#[derive(Default, Serialize, Deserialize, PartialEq)]
+#[derive(Default, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Tanh {
     input: LayerOutput,
 }
@@ -76,7 +76,7 @@ impl Activation for Tanh {
     }
 }
 
-#[derive(Default, Serialize, Deserialize, PartialEq)]
+#[derive(Default, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Sigmoid {
     input: LayerOutput,
 }
@@ -99,7 +99,7 @@ impl Activation for Sigmoid {
     }
 }
 
-#[derive(Default, Serialize, Deserialize, PartialEq)]
+#[derive(Default, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Relu {
     input: LayerOutput,
 }
