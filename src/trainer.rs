@@ -22,7 +22,7 @@ impl Trainer {
     ) {
         let num_thread = num_cpus::get();
         let mut pool = Pool::new(num_thread as u32);
-
+        let batch_size = train_set.len() / num_thread;
         pool.scoped(|s| {
             for e in 0..epoch {
                 let (layer_tx, layer_rx) = mpsc::channel();
@@ -34,7 +34,7 @@ impl Trainer {
                     s.execute(move || {
                         let (mut loss, mut output, mut gradient);
                         loss = 0f32;
-                        for i in n..n * num_thread {
+                        for i in n * batch_size..(n + 1) * batch_size {
                             let x = &train_set[i];
                             let y = &train_ans[i];
                             output = net.predict(&x);
