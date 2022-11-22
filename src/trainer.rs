@@ -74,23 +74,44 @@ impl Trainer {
                 drop(loss_tx);
 
                 for layers in layer_rx {
-                    for (s_layer, f_layer) in layers.iter().zip(network.layers.iter_mut()) {
-                        match (s_layer, f_layer) {
-                            (LayerType::Dense(s_dense), LayerType::Dense(f_dense)) => {
-                                for (s_w, f_w) in
-                                    s_dense.weights.iter().zip(f_dense.weights.iter_mut())
+                    for (train_layer, layer) in layers.iter().zip(network.layers.iter_mut()) {
+                        match (train_layer, layer) {
+                            (LayerType::Dense(train_dense), LayerType::Dense(dense)) => {
+                                for (train_w, w) in
+                                    train_dense.weights.iter().zip(dense.weights.iter_mut())
                                 {
-                                    for col in 0..f_w.len() {
-                                        f_w[col] = (f_w[col] + s_w[col]) / 2.0;
+                                    for col in 0..w.len() {
+                                        w[col] = (w[col] + train_w[col]) / 2.0;
                                     }
                                 }
 
-                                for col in 0..f_dense.biases.len() {
-                                    f_dense.biases[col] =
-                                        (f_dense.biases[col] + s_dense.biases[col]) / 2.0;
+                                for col in 0..dense.biases.len() {
+                                    dense.biases[col] =
+                                        (dense.biases[col] + train_dense.biases[col]) / 2.0;
                                 }
                             }
-                            (LayerType::Conv(_), LayerType::Conv(_)) => todo!(),
+                            (LayerType::Conv(train_conv), LayerType::Conv(conv)) => {
+                                // z_depth. At the time I wrote this 3d conv, I did not have a
+                                // complete picture, I called this depth in its implementation
+                                for (train_z, z) in
+                                    train_conv.kernels.iter().zip(conv.kernels.iter_mut())
+                                {
+                                    for (train_r, r) in train_z.iter().zip(z.iter_mut()) {
+                                        for col in 0..train_r.len() {
+                                            r[col] = (r[col] + train_r[col]) / 2.0;
+                                        }
+                                    }
+                                }
+
+                                //biases
+                                for (train_r, r) in
+                                    train_conv.biases.iter().zip(conv.biases.iter_mut())
+                                {
+                                    for col in 0..train_r.len() {
+                                        r[col] = (r[col] + train_r[col]) / 2.0;
+                                    }
+                                }
+                            }
                             _ => (),
                         }
                     }

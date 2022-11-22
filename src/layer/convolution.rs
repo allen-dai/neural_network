@@ -6,12 +6,12 @@ use std::collections::VecDeque;
 
 #[derive(Serialize, Deserialize, PartialEq, Clone)]
 pub struct ConvolutionLayer {
-    input: Vec<Vec<f32>>,
-    input_shape: (usize, usize, usize), // (depth, width, height)
-    output_shape: (usize, usize, usize),
-    kernel_shape: (usize, usize), // (depth, size)
-    kernels: Vec<Vec<Vec<f32>>>,  // [ input_depth [ kernel_depth [ kernel ] ] ] = 3d vec
-    biases: Vec<Vec<f32>>,        // 2d vec because u only need one block per depth of kernel,
+    pub(crate) input: Vec<Vec<f32>>,
+    pub(crate) input_shape: (usize, usize, usize), // (depth, width, height)
+    pub(crate) output_shape: (usize, usize, usize),
+    pub(crate) kernel_shape: (usize, usize), // (depth, size)
+    pub(crate) kernels: Vec<Vec<Vec<f32>>>,  // [ input_depth [ kernel_depth [ kernel ] ] ] = 3d vec
+    pub(crate) biases: Vec<Vec<f32>>,        // 2d vec because u only need one block per depth of kernel,
 }
 
 impl ConvolutionLayer {
