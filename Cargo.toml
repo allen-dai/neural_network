@@ -7,9 +7,11 @@ edition = "2021"
 
 [dependencies]
 rand = "0.8"
-mnist = { git = "https://github.com/Allen-Dai/mnist"}
 serde = { version = "1.0.137", features = ["derive"] }
 serde_cbor = "0.11.2"
 getrandom = { version = "0.2", features = ["js"] }
 scoped_threadpool = "0.1.9"
 num_cpus = "1.14.0"
+
+[dev-dependencies]
+mnist = { git = "https://github.com/Allen-Dai/mnist"}
