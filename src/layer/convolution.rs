@@ -69,6 +69,22 @@ impl ConvolutionLayer {
         LayerOutput::Conv(out)
     }
 
+    pub fn f_prop_ref(&self, input: &Vec<Vec<f32>>) -> LayerOutput {
+        let mut out: Vec<Vec<f32>> =
+            vec![vec![0f32; self.output_shape.1 * self.output_shape.2]; self.output_shape.0];
+        let kernel_size = self.kernel_shape.1;
+        let chunks = Self::correlation_chunks(&input, &self.input_shape, kernel_size);
+        for (depth, (kernel, chunk)) in self.kernels.iter().zip(chunks).enumerate() {
+            for block in kernel {
+                // chunk is all the movements ( all the slidings ) for the current kernel
+                for (i, mov) in chunk.iter().enumerate() {
+                    out[depth][i] = mov.iter().zip(block).map(|(m, k)| m * k).sum::<f32>();
+                }
+            }
+        }
+        LayerOutput::Conv(out)
+    }
+
     pub fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
         // output_gradient =  dE / dY
         //
@@ -142,7 +158,7 @@ impl ConvolutionLayer {
     ) -> Vec<Vec<Vec<f32>>> {
         let mut out = Vec::new();
         let mut indices = Vec::new();
-        for depth in 0..input_shape.0 {
+        for _ in 0..input_shape.0 {
             let mut d = Vec::new();
             for row in 0..size {
                 for col in 0..size {
@@ -153,7 +169,7 @@ impl ConvolutionLayer {
         }
         for depth in 0..input_shape.0 {
             let mut at_depth = Vec::new();
-            for row in 0..input_shape.2 - size + 1 {
+            for _ in 0..input_shape.2 - size + 1 {
                 for col in 0..input_shape.1 - size + 1 {
                     let mut tmp = Vec::new();
                     for i in indices[depth].iter() {
@@ -207,10 +223,10 @@ impl ConvolutionLayer {
         let mut out_col_idx = 0;
         let mut count = 1;
         let mut out_count = 0;
-        for (row_i, R) in row_indcies.iter().enumerate() {
+        for (row_i, r) in row_indcies.iter().enumerate() {
             let mut in_tmp: Vec<Vec<usize>> = vec![vec![]; col_indices.len()];
             let mut out_tmp: Vec<Vec<usize>> = vec![vec![]; col_indices.len()];
-            for row in 0..*R {
+            for _ in 0..*r {
                 for ((input_tmp, output_tmp), (col, out_col)) in in_tmp
                     .iter_mut()
                     .zip(out_tmp.iter_mut())
@@ -229,7 +245,7 @@ impl ConvolutionLayer {
             col_idx = 0;
             out_col_idx = 0;
             //println!("{} {}", R, size);
-            if R == &size || count > 1 {
+            if r == &size || count > 1 {
                 col_idx = count;
                 count += 1;
             }
@@ -240,7 +256,7 @@ impl ConvolutionLayer {
             } */
 
             if count > 1 {
-                if R < &size || row_indcies[row_i + 1] < size {
+                if r < &size || row_indcies[row_i + 1] < size {
                     out_count += 1;
                     out_col_idx = out_count;
                 }

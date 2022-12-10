@@ -1,42 +1,32 @@
+use mnist::Mnist;
 use neural_network::activations::ActivationFn;
 use neural_network::activations::Sigmoid;
 use neural_network::layer::convolution::ConvolutionLayer;
 use neural_network::layer::dense::DenseLayer;
 use neural_network::layer::LayerType;
 use neural_network::loss::MSE;
+use neural_network::network::Net;
 use neural_network::network::Network;
-
-use mnist::MnistLoader;
-
+use neural_network::trainer::Trainer;
 use rand::thread_rng;
-use rand::Rng;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let MnistLoader {
+    let mut mnist = Mnist::from_download()?;
+    mnist.random_xy_offset();
+    let Mnist {
         train_images,
         train_labels,
         test_images,
         test_labels,
-    } = MnistLoader::new(
-        "./examples/mnist_data/train-images-idx3-ubyte",
-        "./examples/mnist_data/train-labels-idx1-ubyte",
-        "./examples/mnist_data/t10k-images-idx3-ubyte",
-        "./examples/mnist_data/t10k-labels-idx1-ubyte",
-    )?;
+    } = mnist;
 
-    let train_size = 1000;
+    let train_size = 60000;
     let test_size = 100;
 
     let mut rng = thread_rng();
-    let train_bound: usize = 60000 - train_size;
-    let test_bound: usize = 10000 - test_size;
-    let train_left = rng.gen_range(train_size..train_bound);
-    let test_left = rng.gen_range(test_size..test_bound);
-    let train_right = train_left + train_size;
-    let test_right = test_left + test_size;
 
-    let train_range = train_left..train_right;
-    let test_range = test_left..test_right;
+    let train_range = rand::seq::index::sample(&mut rng, 60000, train_size);
+    let test_range = rand::seq::index::sample(&mut rng, 10000, test_size);
 
     let mut train_set = Vec::new();
     let mut train_answer = Vec::new();
@@ -76,29 +66,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         test_answer.push(temp.to_vec());
     }
 
-    let layer_1 = ConvolutionLayer::new((1, 28, 28), (1, 5));
-    //let layer_1 = DenseLayer::new(28 * 28, 50);
-    let layer_2 = DenseLayer::new(576, 100);
-    let layer_3 = DenseLayer::new(100, 10);
-    let activation_1 = Sigmoid::default();
-    let activation_2 = Sigmoid::default();
-    let activation_3 = Sigmoid::default();
-    let layers: Vec<LayerType> = vec![
-        LayerType::Conv(layer_1),
-        LayerType::Dense(layer_2),
-        LayerType::Dense(layer_3),
-    ];
-    let activations: Vec<ActivationFn> = vec![
-        ActivationFn::Sigmoid(activation_1),
-        ActivationFn::Sigmoid(activation_2),
-        ActivationFn::Sigmoid(activation_3),
-    ];
+    let mut network = Network::new(vec![
+        Net::Layer(LayerType::Conv(ConvolutionLayer::new((1, 28, 28), (1, 5)))),
+        Net::Activation(ActivationFn::Sigmoid(Sigmoid::default())),
+        Net::Layer(LayerType::Dense(DenseLayer::new(576, 300))),
+        Net::Activation(ActivationFn::Sigmoid(Sigmoid::default())),
+        Net::Layer(LayerType::Dense(DenseLayer::new(300, 200))),
+        Net::Activation(ActivationFn::Sigmoid(Sigmoid::default())),
+        Net::Layer(LayerType::Dense(DenseLayer::new(200, 100))),
+        Net::Activation(ActivationFn::Sigmoid(Sigmoid::default())),
+        Net::Layer(LayerType::Dense(DenseLayer::new(100, 50))),
+        Net::Activation(ActivationFn::Sigmoid(Sigmoid::default())),
+        Net::Layer(LayerType::Dense(DenseLayer::new(50, 10))),
+        Net::Activation(ActivationFn::Sigmoid(Sigmoid::default())),
+    ]);
 
-    let mut network = Network::new(layers, activations);
+    //let mut network = Network::from_file("./models/mnist_conv")?;
 
     println!("Training started...");
 
-    network.train(MSE {}, &train_set, &train_answer, 3f32, 100, true);
+    Trainer::cpu(
+        &mut network,
+        MSE {},
+        &train_set,
+        &train_answer,
+        0.1f32,
+        1000,
+        true,
+        "./models/mnist_conv",
+    );
 
     println!("Training finished...\n\n");
 
@@ -151,9 +147,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         test_size - correct as usize,
         correct / test_size as f32 * 100.0,
     );
-
-    println!("Model saved to ./models/mnist_conv");
-    network.save_to_file("./models/mnist_conv").unwrap();
 
     Ok(())
 }

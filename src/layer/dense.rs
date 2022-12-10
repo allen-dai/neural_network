@@ -56,6 +56,24 @@ impl DenseLayer {
         )
     }
 
+    pub fn f_prop_ref(&self, input: &Vec<f32>) -> LayerOutput {
+        LayerOutput::Dense(
+            self.weights
+                .iter()
+                //y.j = x.i * w.j.i
+                .map(|neuron| {
+                    neuron
+                        .iter()
+                        .zip(input.iter())
+                        .fold(0f32, |p, (w, i)| p + w * i)
+                })
+                //y.j += b.j
+                .zip(self.biases.iter())
+                .map(|(o, b)| o + b)
+                .collect(),
+        )
+    }
+
     pub fn b_prop(&mut self, output_gradient: &Vec<f32>, learning_rate: f32) -> Vec<f32> {
         // dot product of output_gradient vec[_] * vec[input]
         let mut weight_grad: Vec<Vec<f32>> =

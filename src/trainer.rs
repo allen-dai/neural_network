@@ -19,6 +19,7 @@ impl Trainer {
         learning_rate: f32,
         epoch: usize,
         verbose: bool,
+        path: &str,
     ) {
         let num_thread = num_cpus::get();
         let mut pool = Pool::new(num_thread as u32);
@@ -120,6 +121,7 @@ impl Trainer {
                 if verbose {
                     println!("epoch: {} to {}", e + 1, loss)
                 }
+                network.save_to_file(&path).unwrap();
             }
         });
     }

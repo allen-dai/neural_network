@@ -33,6 +33,23 @@ pub trait Activation {
         }
     }
 
+    fn f_prop_ref(&self, layer_out: &LayerOutput) -> LayerOutput {
+        match layer_out {
+            LayerOutput::Conv(input) => {
+                LayerOutput::Conv(
+                    input
+                        .iter()
+                        .map(|row| row.iter().map(|i| self.activation(*i)).collect())
+                        .collect(),
+                )
+            }
+            LayerOutput::Dense(input) => {
+                LayerOutput::Dense(input.iter().map(|i| self.activation(*i)).collect())
+            }
+            _ => unreachable!(),
+        }
+    }
+
     fn b_prop(&self, output_gradient: &[f32]) -> Vec<f32> {
         match self.get_input() {
             LayerOutput::Conv(input_2d) => input_2d

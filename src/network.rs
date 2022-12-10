@@ -1,10 +1,15 @@
 use crate::activations::{Activation, ActivationFn};
 use crate::layer::{LayerOutput, LayerType};
-use crate::loss::Loss;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Write;
 use std::path::Path;
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum Net {
+    Layer(LayerType),
+    Activation(ActivationFn),
+}
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Network {
@@ -13,7 +18,15 @@ pub struct Network {
 }
 
 impl Network {
-    pub fn new(layers: Vec<LayerType>, activations: Vec<ActivationFn>) -> Self {
+    pub fn new(net: Vec<Net>) -> Self {
+        let mut layers = Vec::new();
+        let mut activations = Vec::new();
+        for n in net {
+            match n {
+                Net::Layer(layer) => layers.push(layer),
+                Net::Activation(activation) => activations.push(activation),
+            }
+        }
         Network {
             layers,
             activations,
@@ -65,56 +78,49 @@ impl Network {
         }
     }
 
-    pub fn train<L: Loss>(
-        &mut self,
-        loss_fn: L,
-        train_set: &Vec<Vec<f32>>,
-        train_answer: &Vec<Vec<f32>>,
-        learning_rate: f32,
-        epoch: usize,
-        verbose: bool,
-    ) {
-        let (mut loss, mut output, mut gradient);
-        for i in 0..epoch {
-            loss = 0f32;
-            for (x, y) in train_set.iter().zip(train_answer.iter()) {
-                output = self.predict(&x);
 
-                loss += loss_fn.loss(&y, &output);
-
-                gradient = loss_fn.loss_prime(&y, &output);
-
-                for (layer_type, activation_fn) in self
-                    .layers
-                    .iter_mut()
-                    .zip(self.activations.iter_mut())
-                    .rev()
-                {
-                    match activation_fn {
-                        ActivationFn::Tanh(tanh) => {
-                            gradient = tanh.b_prop(&gradient);
+    pub fn predict_ref(&self, input: &Vec<f32>) -> Vec<f32> {
+        let mut output = LayerOutput::Dense(input.clone());
+        for (layer_type, activation_fn) in self.layers.iter().zip(self.activations.iter()) {
+            match layer_type {
+                LayerType::Dense(layer) => {
+                    match output {
+                        // currenty just flattening the vector. not sure if this is the proper way
+                        // to do it.
+                        LayerOutput::Conv(v) => {
+                            output = layer.f_prop_ref(&v.into_iter().flatten().collect());
                         }
-                        ActivationFn::Sigmoid(sigmoid) => {
-                            gradient = sigmoid.b_prop(&gradient);
+                        LayerOutput::Dense(v) => {
+                            output = layer.f_prop_ref(&v);
                         }
-                        ActivationFn::Relu(relu) => {
-                            gradient = relu.b_prop(&gradient);
-                        }
-                    }
-                    match layer_type {
-                        LayerType::Dense(layer) => {
-                            gradient = layer.b_prop(&gradient, learning_rate);
-                        }
-                        LayerType::Conv(layer) => {
-                            gradient = layer.b_prop(&gradient, learning_rate);
-                        }
+                        _ => unreachable!(),
                     }
                 }
+                LayerType::Conv(layer) => match output {
+                    LayerOutput::Conv(v) => output = layer.f_prop_ref(&v),
+                    LayerOutput::Dense(v) => output = layer.f_prop_ref(&vec![v]),
+                    _ => unreachable!(),
+                },
             }
 
-            if verbose {
-                println!("epoch: {} | loss: {}", i, loss / train_set.len() as f32);
+            match activation_fn {
+                ActivationFn::Tanh(tanh) => {
+                    output = tanh.f_prop_ref(&output);
+                }
+                ActivationFn::Sigmoid(sigmoid) => {
+                    output = sigmoid.f_prop_ref(&output);
+                }
+                ActivationFn::Relu(relu) => {
+                    output = relu.f_prop_ref(&output);
+                }
             }
+        }
+
+        match output {
+            LayerOutput::Conv(_) | LayerOutput::None => {
+                unreachable!("Last layer need to be a dense layer")
+            }
+            LayerOutput::Dense(prediction) => prediction,
         }
     }
 
