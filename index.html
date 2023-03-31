@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-black text-white">
+    <div class="grid w-screen h-screen place-items-center">
+        <div class="flex place-items-center gap-x-10">
+            <div>
+                <canvas id="canvas" class="bg-white rounded" width="280" height="280"></canvas>
+                <button id="clear_btn"
+                    class="text-center bg-white text-black w-[280px] rounded mt-2 text-sm hover:bg-neutral-300 active:bg-neutral-900 transition-[1s]">Clear</button>
+            </div>
+            <div class="text-[20px]">
+                &rarr;
+            </div>
+            <div>
+                <canvas id="downscaled_canvas" class="bg-white rounded" width="28" height="28"></canvas>
+            </div>
+            <div>
+                <div class="h-[280px] w-[28px] ml-2 relative">
+                    <div id="output_div" class="bg-red-400 w-[26px] transition-[1s] absolute bottom-0 rounded">
+                        <p id="output_percent" class="text-sm transform translate-y-[-20px]">-%</p>
+                    </div>
+                </div>
+                <p id="output_ret" class="transform translate-x-[2px] text-center text-xl text-bold">&infin;</p>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        import init, {WasmNN} from './wasm/pkg/wasm.js';
+        await init();
+        let nn = await (new WasmNN("https://mnist-models.s3.ca-central-1.amazonaws.com/mnist"));
+
+        const canvas = document.getElementById('canvas');
+        const output_div = document.getElementById('output_div');
+        const output_percent = document.getElementById('output_percent');
+        const output_ret = document.getElementById('output_ret');
+        const ctx = canvas.getContext('2d');
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = "#000000";
+        ctx.lineWidth = 30;
+        // context.fillRect(0, 0, canvas.width, canvas.height);
+        let x = 0, y = 0;
+        let isMouseDown = false;
+
+        let clear_btn = document.getElementById("clear_btn");
+
+        clear_btn.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            output_div.style.height = "0px";
+            output_percent.innerHTML = "-%";
+            output_ret.innerHTML = "&infin;";
+            get_input();
+        });
+
+        const stopDrawing = () => {isMouseDown = false;}
+        const startDrawing = event => {
+            isMouseDown = true;
+            [x, y] = [event.offsetX, event.offsetY];
+        }
+
+        const drawLine = event => {
+            if (isMouseDown) {
+                const newX = event.offsetX;
+                const newY = event.offsetY;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(newX, newY);
+                ctx.stroke();
+                x = newX;
+                y = newY;
+                let out = nn.predict(get_input());
+                let max = Math.max(...out);
+                let ret = out.indexOf(max);
+                output_div.style.height = `${Math.floor(max * 280)}px`;
+                output_percent.innerHTML = `${Math.floor(max * 100)}%`;
+                output_ret.innerHTML = ret;
+                output_div.style.backgroundColor = `hsl(${Math.floor(max * 120)}, 100%, 50%)`;
+            }
+        }
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', drawLine);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        function get_input() {
+            let scale = 28.0 / canvas.width;
+            let imageData = downscaleImage(scale);
+            let down_scaled_ctx = document.getElementById('downscaled_canvas').getContext('2d');
+            down_scaled_ctx.putImageData(imageData, 0, 0);
+            let nn_input = []
+            let data = imageData.data;
+            for (var i = 3; i < data.length; i += 4) {
+                nn_input.push(data[i] / 255.0);
+            }
+            return nn_input;
+        }
+
+        function downscaleImage(scaleFactor) {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = 28;
+            tempCanvas.height = 28;
+            const originalImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const index = (y * canvas.width + x) * 4;
+                    const alpha = originalImageData.data[index + 3];
+                    if (alpha > 0) {
+                        minX = Math.min(minX, x);
+                        maxX = Math.max(maxX, x);
+                        minY = Math.min(minY, y);
+                        maxY = Math.max(maxY, y);
+                    }
+                }
+            }
+            const contentWidth = maxX - minX + 1;
+            const contentHeight = maxY - minY + 1;
+            const scaledWidth = contentWidth * scaleFactor;
+            const scaledHeight = contentHeight * scaleFactor;
+            const offsetX = (tempCanvas.width - scaledWidth) / 2;
+            const offsetY = (tempCanvas.height - scaledHeight) / 2;
+            tempCtx.drawImage(canvas, minX, minY, contentWidth, contentHeight, offsetX, offsetY, scaledWidth, scaledHeight);
+            const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+            return imageData;
+        }
+    </script>
+</body>
+
+</html>
