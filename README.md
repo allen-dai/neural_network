@@ -1,11 +1,16 @@
-# Rust Neural Network
-A neural network made from sratch in rust.
+# NN in Rust from sratch
+Demo https://allen-dai.github.io/neural_network/
 
-Inpsired by _**3Blue1Brown**_ [Neural Network series](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) and _**The Independent Code**_ [Neural Network from Scratch](https://www.youtube.com/watch?v=pauPCy_s0Ok)
 
-# Usage
+### Usage
+Training on CPU, multithreaded.
 ```bash
 cargo run --example mnist
-cargo run --example xor
-cargo run --example mnist_trained   // This will load the pre-trained model and it will be run against the whole mnist test set
 ```
+
+### Screenshot
+![image](https://user-images.githubusercontent.com/80537336/229264850-fc1817f0-c18e-478c-9e96-8c3d0811fbd1.png)
+
+
+## Credits
+The reason I started this project: _**3Blue1Brown**_ [Neural Network series](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) and _**The Independent Code**_ [Neural Network from Scratch](https://www.youtube.com/watch?v=pauPCy_s0Ok)
