@@ -9,7 +9,7 @@ cargo run --example mnist
 ```
 
 ### Screenshot
-![image](https://user-images.githubusercontent.com/80537336/229264850-fc1817f0-c18e-478c-9e96-8c3d0811fbd1.png)
+![image](https://user-images.githubusercontent.com/80537336/229265356-128b0a83-20ef-4336-a0d6-eec2b4d731ee.png)
 
 
 ## Credits
