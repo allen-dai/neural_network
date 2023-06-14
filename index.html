@@ -24,13 +24,25 @@
             <div>
                 <canvas id="downscaled_canvas" class="bg-white rounded" width="28" height="28"></canvas>
             </div>
-            <div>
-                <div class="h-[280px] w-[28px] ml-2 relative">
-                    <div id="output_div" class="bg-red-400 w-[26px] transition-[1s] absolute bottom-0 rounded">
-                        <p id="output_percent" class="text-sm transform translate-y-[-20px]">-%</p>
+            <div class="flex">
+                <div>
+                    <div class="h-[280px] w-[28px] ml-2 relative">
+                        <div id="output_div" class="bg-red-400 w-[26px] transition-[1s] absolute bottom-0 rounded">
+                            <p id="output_percent" class="text-sm transform translate-y-[-20px]">-%</p>
+                        </div>
                     </div>
+                    <p id="output_ret" class="transform translate-x-[2px] text-center text-xl text-bold">&infin;</p>
+                    <p class="transform translate-x-[2px] text-center text-sm text-bold">Linear</p>
                 </div>
-                <p id="output_ret" class="transform translate-x-[2px] text-center text-xl text-bold">&infin;</p>
+                <div class="ml-10">
+                    <div class="h-[280px] w-[28px] ml-2 relative">
+                        <div id="output_div2" class="bg-red-400 w-[26px] transition-[1s] absolute bottom-0 rounded">
+                            <p id="output_percent2" class="text-sm transform translate-y-[-20px]">-%</p>
+                        </div>
+                    </div>
+                    <p id="output_ret2" class="transform translate-x-[2px] text-center text-xl text-bold">&infin;</p>
+                    <p class="transform translate-x-[2px] text-center text-sm text-bold">Conv</p>
+                </div>
             </div>
         </div>
     </div>
@@ -39,18 +51,23 @@
     <script type="module">
         import init, {WasmNN, DfdxNN} from './wasm/pkg/wasm.js';
         await init();
-        let model = "mnist";
+        let model = "conv-mnist.safetensors";
         let loading = true;
 
         const canvas = document.getElementById('canvas');
         const output_div = document.getElementById('output_div');
         const output_percent = document.getElementById('output_percent');
         const output_ret = document.getElementById('output_ret');
+        const output_div2 = document.getElementById('output_div2');
+        const output_percent2 = document.getElementById('output_percent2');
+        const output_ret2 = document.getElementById('output_ret2');
         const loading_p = document.getElementById('loading_p');
         let nn;
+        let nn2;
         try {
             // Ummm... sometime it won't catch the error. why... ¯\_(ツ)_/¯ well. enough of js for the day.
-            nn = await (new WasmNN(`https://raw.githubusercontent.com/allen-dai/neural_network/master/models/${model}`));
+            nn = await (new WasmNN(`https://raw.githubusercontent.com/allen-dai/neural_network/master/models/mnist`));
+            nn2 = await (new DfdxNN(`https://raw.githubusercontent.com/allen-dai/neural_network/master/models/conv-mnist.safetensors`));
             loading_p.innerHTML = "";
         } catch (e) {
             canvas.classList.add("opacity-70");
@@ -74,6 +91,9 @@
             output_div.style.height = "0px";
             output_percent.innerHTML = "-%";
             output_ret.innerHTML = "&infin;";
+            output_div2.style.height = "0px";
+            output_percent2.innerHTML = "-%";
+            output_ret2.innerHTML = "&infin;";
             get_input();
         });
 
@@ -100,6 +120,21 @@
                 output_percent.innerHTML = `${Math.floor(max * 100)}%`;
                 output_ret.innerHTML = ret;
                 output_div.style.backgroundColor = `hsl(${Math.floor(max * 120)}, 100%, 50%)`;
+                {
+                    let out = nn2.predict(get_input());
+                    let max = Math.max(...out);
+                    let ret = out.indexOf(max);
+                    const softmax = out.map(x => Math.exp(x));
+                    const softmaxSum = softmax.reduce((sum, x) => sum + x, 0);
+                    const probabilities = softmax.map(x => x / softmaxSum);
+                    const normalizedProbabilities = probabilities.map(x => x / probabilities.length);
+                    const map = normalizedProbabilities.map(x => x * 10);
+                    const confidentLevel = isNaN(map[ret]) ? 0 : map[ret];
+                    output_div2.style.height = `${Math.floor(confidentLevel * 280)}px`;
+                    output_percent2.innerHTML = `${Math.floor(confidentLevel * 100)}%`;
+                    output_ret2.innerHTML = isNaN(map[ret]) ? "?" : ret;
+                    output_div2.style.backgroundColor = `hsl(${Math.floor(confidentLevel * 120)}, 100%, 50%)`;
+                }
             }
         }
 
